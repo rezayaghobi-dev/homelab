@@ -1,0 +1,10 @@
+﻿.env
+*.env.local
+*secrets*
+*.pem
+*.key
+*backup*
+**/config/
+**/data/
+*.db
+*.sqlite*
