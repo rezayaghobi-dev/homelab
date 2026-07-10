@@ -1,0 +1,20 @@
+services:
+  samba:
+    image: dperson/samba:latest
+    container_name: samba
+    network_mode: host
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Tehran
+      - USER=${SAMBA_USER}
+      - NMBD=false
+      - SMBD=true
+      - WSDD2=false
+      - AVAHI=false
+      - CONFIGFILE=/etc/samba/smb.conf
+    volumes:
+      - /home/rezayaghobi/docker/samba/config/smb.conf:/etc/samba/smb.conf
+      - /mnt/storage:/mount/main
+      - /mnt/hdd3:/mount/game_backups
+    restart: unless-stopped

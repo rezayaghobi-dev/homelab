@@ -1,0 +1,19 @@
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+    ports:
+      - "8085:80"
+    user: "1000:1000"
+    volumes:
+      - /srv/samba/games:/games
+      - /mnt/storage:/storage
+      - /home/rezayaghobi/docker/filebrowser/config:/config
+      - filebrowser_db:/database
+      - filebrowser_srv:/srv
+    restart: unless-stopped
+
+volumes:
+  filebrowser_db:
+  filebrowser_srv:
+
