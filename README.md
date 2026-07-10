@@ -24,7 +24,7 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **Filebrowser** | `filebrowser/` | Web-based file manager for the server's storage |
 | **Media stack** | `mediastack/` | Plex (media server), Sonarr/Radarr/Prowlarr (media automation and indexing), qBittorrent (download client) |
 | **Minecraft** | `minecraft/` | Self-hosted game server |
-| **Sentinel** | `sentinel/` | _TODO: describe what this monitors/does_ |
+| **Sentinel** | `sentinel/` | Disk health monitoring integrated  with smartctl  dump the outputs in the container logs  |
 | **smartctl** | `smartctl/` | Disk health monitoring (S.M.A.R.T. data) |
 
 ## Repository structure
