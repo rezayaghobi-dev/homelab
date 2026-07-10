@@ -1,0 +1,16 @@
+services:
+  minecraft:
+    image: itzg/minecraft-server:latest
+    container_name: minecraft
+    restart: unless-stopped
+    ports:
+      - "25565:25565"
+    environment:
+      EULA: "TRUE"
+      TYPE: "CUSTOM"
+      CUSTOM_SERVER: "paper-1.21.11-117.jar"
+      MEMORY: "2G"
+      DISABLE_DOWNLOADS: "true"
+    volumes:
+      - /home/rezayaghobi/docker/minecraft/server:/data
+

@@ -1,0 +1,23 @@
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Baku
+      - WEBUI_PORT=8080
+    volumes:
+      - ./qbittorrent:/config
+      - /mnt/storage/films/downloads:/downloads
+    networks:
+      - mediastack
+
+networks:
+  mediastack:
+    external: true

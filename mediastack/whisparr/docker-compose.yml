@@ -1,0 +1,24 @@
+services:
+  whisparr:
+    image: ghcr.io/hotio/whisparr:v3
+    container_name: whisparr
+    restart: unless-stopped
+    ports:
+      - "6969:6969"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - UMASK=002
+      - TZ=Asia/Baku
+    volumes:
+      - ./config:/config
+      - /mnt/storage/films/downloads:/downloads
+      - /mnt/storage/adult:/data/whisparr
+      - /mnt/storage/films/downloads/whisparr:/downloads/whisparr  # ADD THIS
+
+    networks:
+      - mediastack
+
+networks:
+  mediastack:
+    external: true
