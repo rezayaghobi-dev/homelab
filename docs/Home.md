@@ -4,13 +4,13 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 
 ## Contents
 
-- [[Architecture and Hardware]]
-- [[Monitoring Stack]]
-- [[Network Services]]
-- [[Media Automation]]
-- [[Workflow Automation]]
-- [[Storage Health]]
-- [[Lessons Learned]]
+- [Architecture and Hardware](Architecture-and-Hardware.md)
+- [Monitoring Stack](Monitoring-Stack.md)
+- [Network Services](Network-Services.md)
+- [Media Automation](Media-Automation.md)
+- [Workflow Automation](Workflow-Automation.md)
+- [Storage Health](Storage-Health.md)
+- [Lessons Learned](Lessons-Learned.md)
 
 ## At a glance
 

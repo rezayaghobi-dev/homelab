@@ -20,4 +20,4 @@ The homelab runs on a repurposed always-on Ubuntu Server box — modest specs by
 
 ## Network
 
-All services communicate over Docker's internal bridge networks, with only the ports that need external access published to the host. See [[Network Services]] for details on Pi-hole and Portainer specifically.
+All services communicate over Docker's internal bridge networks, with only the ports that need external access published to the host. See [Network Services](Network-Services.md) for details on Pi-hole and Portainer specifically.
