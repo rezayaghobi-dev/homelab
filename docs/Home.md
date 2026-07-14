@@ -11,6 +11,8 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 - [Workflow Automation](Workflow-Automation.md)
 - [Storage Health](Storage-Health.md)
 - [Lessons Learned](Lessons-Learned.md)
+- [AI Coding Agent](AI-Agent.md)
+- [Reverse Proxy](Reverse-Proxy.md)
 
 ## At a glance
 
@@ -20,9 +22,10 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 | **Orchestration** | Docker Compose, one stack per service |
 | **Management** | Portainer |
 | **Monitoring** | Prometheus + Grafana + cAdvisor + node-exporter |
-| **Network** | Pi-hole (DNS filtering), Samba (file sharing) |
+| **Network** | Pi-hole (DNS filtering), Samba (file sharing), nginx (proxy managing) |
 | **Automation** | n8n |
 | **Media** | Plex + Sonarr/Radarr/Prowlarr + qBittorrent |
 | **Disk health** | Hard Disk Sentinel |
+| **AI Agent** | OpenHands + Ollama |
 
 This is a running system, not a demo — screenshots throughout this wiki are from the live dashboards.
