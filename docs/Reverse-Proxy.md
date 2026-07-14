@@ -2,7 +2,7 @@
 
 [Nginx Proxy Manager](https://nginxproxymanager.com/) sits in front of every service on the LAN, replacing `http://<ip>:<port>` with friendly `<service>.home` names and trusted local HTTPS. Runs as its own Compose stack under `nginx-proxy-manager/`.
 
-![Proxy hosts list](images/npm-proxy-hosts.png)
+![Sanctions/access error](images/openhands-error.png)
 
 ## Why
 

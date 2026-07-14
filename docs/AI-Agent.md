@@ -19,7 +19,7 @@ Getting an actual model behind the agent turned out to be the hardest part of th
 
 **Direct paid APIs (DeepSeek, Kimi/Moonshot) both require a funded account** with no meaningful free tier — a non-starter without a way to pay.
 
-![Sanctions/access error](images/openhands-error.png)
+![Proxy hosts list](images/npm-proxy-hosts.png)
 
 **Current working setup: [BazaarLink](https://bazaarlink.ai), an aggregator API.** It routes requests to underlying models (confirmed via its own usage dashboard: Gemini 2.5 Flash-Lite and DeepSeek V4 Flash) through its own infrastructure rather than directly from this network — which is what allows it to reach providers that would otherwise reject requests from this region. It currently has a working free/low-cost tier.
 
