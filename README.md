@@ -26,8 +26,8 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **Minecraft** | `minecraft/` | Self-hosted game server |
 | **Sentinel** | `sentinel/` | Disk health monitoring integrated with smartctl, dumps output to container logs |
 | **smartctl** | `smartctl/` | Disk health monitoring (S.M.A.R.T. data) |
-| **OpenHands** | `openhands/` | Self-hosted AI coding agent (OpenHands/agent-canvas) backed by Ollama — see [AI Coding Agent](docker-compose/docs/AI-Agent.md) |
-| **Nginx Proxy Manager** | `nginx-proxy-manager/` | Reverse proxy giving every service a friendly `.home` hostname with locally-trusted HTTPS — see [Reverse Proxy](docker-compose/docs/Reverse-Proxy.md) |
+| **OpenHands** | `openhands/` | Self-hosted AI coding agent (OpenHands/agent-canvas) backed by Ollama — see [AI Coding Agent](docs/AI-Agent.md) |
+| **Nginx Proxy Manager** | `nginx-proxy-manager/` | Reverse proxy giving every service a friendly `.home` hostname with locally-trusted HTTPS — see [Reverse Proxy](docs/Reverse-Proxy.md) |
 
 ## Repository structure
 
@@ -94,15 +94,15 @@ docker compose up -d
 
 - All `.env` files, runtime config directories, and databases are excluded via `.gitignore` — only deployment definitions (`docker-compose.yml`) and `.env.example` placeholders are tracked.
 - Passwords referenced in compose files are injected via environment variables, never hardcoded.
-- The AI coding agent (`openhands/`) currently uses a third-party API aggregator as its LLM backend — see [AI Coding Agent](docker-compose/docs/AI-Agent.md) for details and caveats. It has no access to the Docker socket or other containers on the host.
+- The AI coding agent (`openhands/`) currently uses a third-party API aggregator as its LLM backend — see [AI Coding Agent](docs/AI-Agent.md) for details and caveats. It has no access to the Docker socket or other containers on the host.
 
 ## Lessons learned
 
 - Splitting each service into its own folder with its own Compose file made it much easier to reason about dependencies and update services independently, instead of one giant Compose file.
 - Runtime config/state (API keys, session tokens, library databases) needs to be gitignored at the directory level (`**/config/`, `**/data/`) — a plain text/secret grep alone isn't enough, since it silently skips over app-specific binary and XML config files.
 - Centralized monitoring (Prometheus + Grafana + cAdvisor + node-exporter) made it possible to actually see resource usage per container, which mattered a lot on lower-spec hardware.
-- Free-tier cloud AI APIs enforce regional access restrictions automatically — worth checking a provider's terms before building around "free tier" as an assumption. See [AI Coding Agent](docker-compose/docs/AI-Agent.md).
-- Wildcard TLS certs (`*.home`) are rejected by browsers on single-label local domains — certificates for local reverse proxies need explicit hostnames listed instead. See [Reverse Proxy](docker-compose/docs/Reverse-Proxy.md).
+- Free-tier cloud AI APIs enforce regional access restrictions automatically — worth checking a provider's terms before building around "free tier" as an assumption. See [AI Coding Agent](docs/AI-Agent.md).
+- Wildcard TLS certs (`*.home`) are rejected by browsers on single-label local domains — certificates for local reverse proxies need explicit hostnames listed instead. See [Reverse Proxy](docs/Reverse-Proxy.md).
 
 ## Roadmap
 
