@@ -1,0 +1,23 @@
+services:
+  agent-canvas:
+    image: ghcr.io/openhands/agent-canvas:latest
+    container_name: agent-canvas
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - openhands-data:/home/openhands/.openhands
+      - ./projects:/home/openhands/workspace/project
+    stdin_open: true
+    tty: true
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+volumes:
+  openhands-data:
+  ollama-data:
