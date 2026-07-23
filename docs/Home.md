@@ -13,6 +13,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 - [Lessons Learned](Lessons-Learned.md)
 - [AI Coding Agent](AI-Agent.md)
 - [Reverse Proxy](Reverse-Proxy.md)
+- [Semaphore](Semaphore.md)
 
 ## At a glance
 
@@ -23,8 +24,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 | **Management** | Portainer |
 | **Monitoring** | Prometheus + Grafana + cAdvisor + node-exporter |
 | **Network** | Pi-hole (DNS filtering), Samba (file sharing), nginx (proxy managing) |
-| **Automation** | n8n |
-| **Media** | Plex + Sonarr/Radarr/Prowlarr + qBittorrent |
+| **Automation**     | n8n + **Semaphore** (Ansible Web UI) || **Media** | Plex + Sonarr/Radarr/Prowlarr + qBittorrent |
 | **Disk health** | Hard Disk Sentinel |
 | **AI Agent** | OpenHands + Ollama |
 

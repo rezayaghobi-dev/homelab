@@ -28,7 +28,7 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **smartctl** | `smartctl/` | Disk health monitoring (S.M.A.R.T. data) |
 | **OpenHands** | `openhands/` | Self-hosted AI coding agent (OpenHands/agent-canvas) backed by Ollama — see [AI Coding Agent](docs/AI-Agent.md) |
 | **Nginx Proxy Manager** | `nginx-proxy-manager/` | Reverse proxy giving every service a friendly `.home` hostname with locally-trusted HTTPS — see [Reverse Proxy](docs/Reverse-Proxy.md) |
-
+| **Semaphore**            | `semaphore/`                                | Self-hosted Ansible UI (alternative to AWX) — see [Semaphore Guide](docs/Semaphore.md) |
 ## Repository structure
 
 ```
@@ -65,6 +65,8 @@ homelab/
 │   └── docker-compose.yaml
 ├── nginx-proxy-manager/
 │   └── docker-compose.yaml
+├── semaphore/                  
+│   ├── docker-compose.yml
 ├── docs/
 │   ├── Home.md
 │   ├── Architecture-and-Hardware.md
@@ -76,6 +78,7 @@ homelab/
 │   ├── AI-Agent.md
 │   ├── Reverse-Proxy.md
 │   ├── Lessons-Learned.md
+│   ├── Semaphore.md            
 │   └── images/
 └── .gitignore
 ```
