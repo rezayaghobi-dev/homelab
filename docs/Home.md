@@ -14,6 +14,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 - [AI Coding Agent](AI-Agent.md)
 - [Reverse Proxy](Reverse-Proxy.md)
 - [Semaphore](Semaphore.md)
+- [DockScope](DockScope.md)
 
 ## At a glance
 
@@ -21,7 +22,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 |---|---|
 | **Host** | Ubuntu Server |
 | **Orchestration** | Docker Compose, one stack per service |
-| **Management** | Portainer |
+| **Management** | Portainer, **DockScope** (3D visual dashboard) |
 | **Monitoring** | Prometheus + Grafana + cAdvisor + node-exporter |
 | **Network** | Pi-hole (DNS filtering), Samba (file sharing), nginx (proxy managing) |
 | **Automation**     | n8n + **Semaphore** (Ansible Web UI) || **Media** | Plex + Sonarr/Radarr/Prowlarr + qBittorrent |

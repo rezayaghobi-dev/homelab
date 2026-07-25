@@ -19,6 +19,7 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **Monitoring stack** | `monitoring-grafana-promethues-cadvisor-node-exporter/` | Prometheus for metrics collection, Grafana for dashboards, cAdvisor for per-container resource stats, node-exporter for host-level metrics |
 | **Pi-hole** | `pihole/` | Network-wide DNS-level ad and tracker blocking |
 | **Portainer** | `portainer/` | Web UI for managing and monitoring all Docker containers on the host |
+| **DockScope** | `dockscope/` | 3D visual dashboard mapping containers, networks, and dependencies, with anomaly detection and crash diagnostics — see [DockScope](docs/DockScope.md) |
 | **n8n** | `n8n/` | Workflow automation engine, backed by Postgres |
 | **Samba** | `samba/` | Network file sharing across LAN devices |
 | **Filebrowser** | `filebrowser/` | Web-based file manager for the server's storage |
@@ -39,6 +40,8 @@ homelab/
 │   ├── docker-compose.yml
 │   └── .env.example
 ├── portainer/
+│   └── docker-compose.yml
+├── dockscope/
 │   └── docker-compose.yml
 ├── n8n/
 │   ├── docker-compose.yaml
@@ -79,6 +82,7 @@ homelab/
 │   ├── Reverse-Proxy.md
 │   ├── Lessons-Learned.md
 │   ├── Semaphore.md            
+│   ├── DockScope.md
 │   └── images/
 └── .gitignore
 ```
@@ -98,6 +102,7 @@ docker compose up -d
 - All `.env` files, runtime config directories, and databases are excluded via `.gitignore` — only deployment definitions (`docker-compose.yml`) and `.env.example` placeholders are tracked.
 - Passwords referenced in compose files are injected via environment variables, never hardcoded.
 - The AI coding agent (`openhands/`) currently uses a third-party API aggregator as its LLM backend — see [AI Coding Agent](docs/AI-Agent.md) for details and caveats. It has no access to the Docker socket or other containers on the host.
+- **DockScope** (`dockscope/`) mounts `/var/run/docker.sock`, the same as Portainer — this grants it effectively root-equivalent access to the Docker host, and it currently has no built-in authentication on its web UI, so it's kept LAN-only and not exposed through the reverse proxy. See [DockScope](docs/DockScope.md).
 
 ## Lessons learned
 

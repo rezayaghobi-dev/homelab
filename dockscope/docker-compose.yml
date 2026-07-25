@@ -1,0 +1,18 @@
+services:
+  semaphore:
+    image: semaphoreui/semaphore:latest
+    container_name: semaphore
+    ports:
+      - "3001:3000"
+    environment:
+      SEMAPHORE_DB_DIALECT: sqlite
+      SEMAPHORE_DB_PATH: /var/lib/semaphore/database.db
+      SEMAPHORE_ADMIN: admin
+      SEMAPHORE_ADMIN_PASSWORD: rezayaghobi1386
+      SEMAPHORE_ADMIN_EMAIL: rezay5639@gmail.com
+      SEMAPHORE_ADMIN_NAME: Admin
+      SEMAPHORE_SECRET_KEY: cc4b3a5a90d31b963bee48a9dee089472bef5e0461f934db7891fc68161d36f7
+    volumes:
+      - ./data:/var/lib/semaphore
+      - ./playbooks:/playbooks
+    restart: unless-stopped
