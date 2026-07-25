@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  vars:
+    compose_dir: "/home/rezayaghobi/docker/portainer"
+    service_name: "Portainer"
+  roles:
+    - docker_compose_update

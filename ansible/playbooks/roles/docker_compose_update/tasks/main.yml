@@ -1,0 +1,110 @@
+---
+- name: Record start time
+  ansible.builtin.command: date +%s
+  register: start_epoch
+  changed_when: false
+
+- name: 🚀 Starting update
+  ansible.builtin.debug:
+    msg:
+      - "========================================"
+      - "🔧 Updating {{ service_name }}"
+      - "📁 Compose directory: {{ compose_dir }}"
+      - "🕒 Started: {{ lookup('pipe', 'date \"+%Y-%m-%d %H:%M:%S\"') }}"
+      - "========================================"
+
+- name: Get disk usage before pull
+  ansible.builtin.command: docker system df
+  register: disk_before
+  changed_when: false
+
+- name: Pull latest images
+  ansible.builtin.command:
+    cmd: docker compose pull
+    chdir: "{{ compose_dir }}"
+  register: pull_result
+  changed_when: "'Downloaded' in pull_result.stdout or 'Pulling' in pull_result.stdout"
+
+- name: Show pull output
+  ansible.builtin.debug:
+    var: pull_result.stdout_lines
+
+- name: Get disk usage after pull
+  ansible.builtin.command: docker system df
+  register: disk_after
+  changed_when: false
+
+- name: 📦 Show disk usage before pull
+  ansible.builtin.debug:
+    var: disk_before.stdout_lines
+
+- name: 📦 Show disk usage after pull
+  ansible.builtin.debug:
+    var: disk_after.stdout_lines
+
+- name: 📦 Disk usage note
+  ansible.builtin.debug:
+    msg: "(Totals are host-wide, not just this stack — compare the 'Images' row above/below to gauge what this pull added.)"
+
+- name: Recreate containers
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: "{{ compose_dir }}"
+  register: compose_result
+
+- name: Wait for services
+  ansible.builtin.pause:
+    seconds: 5
+
+- name: Get compose status
+  ansible.builtin.command:
+    cmd: docker compose ps
+    chdir: "{{ compose_dir }}"
+  register: compose_status
+
+- name: 📋 Display compose status
+  ansible.builtin.debug:
+    msg:
+      - "----------------------------------------"
+      - "📋 Container status for {{ service_name }}"
+      - "----------------------------------------"
+      - "{{ compose_status.stdout_lines }}"
+
+- name: Verify every container is Up
+  ansible.builtin.assert:
+    that:
+      - "'Exit' not in compose_status.stdout"
+      - "'Created' not in compose_status.stdout"
+      - "'Restarting' not in compose_status.stdout"
+    fail_msg: |
+      ❌ One or more containers are not healthy.
+      Image cleanup skipped.
+    success_msg: |
+      ✅ All containers are running correctly.
+
+- name: Remove unused images
+  ansible.builtin.command:
+    cmd: docker image prune -f
+  register: prune_result
+
+- name: Show reclaimed space
+  ansible.builtin.debug:
+    var: prune_result.stdout_lines
+
+- name: Record end time
+  ansible.builtin.command: date +%s
+  register: end_epoch
+  changed_when: false
+
+- name: Compute elapsed time
+  ansible.builtin.set_fact:
+    elapsed_seconds: "{{ end_epoch.stdout | int - start_epoch.stdout | int }}"
+
+- name: ✅ Finished
+  ansible.builtin.debug:
+    msg:
+      - "========================================"
+      - "🎉 {{ service_name }} updated successfully!"
+      - "⏱️  Duration: {{ (elapsed_seconds | int / 60) | int }}m {{ elapsed_seconds | int % 60 }}s"
+      - "🧹 Cleanup: {{ prune_result.stdout_lines | join(' ') }}"
+      - "========================================"

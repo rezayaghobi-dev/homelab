@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  vars:
+    compose_dir: "/home/rezayaghobi/docker/plex"
+    service_name: "Plex"
+  roles:
+    - docker_compose_update

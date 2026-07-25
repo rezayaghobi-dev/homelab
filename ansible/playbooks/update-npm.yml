@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  vars:
+    compose_dir: "/home/rezayaghobi/docker/npm"
+    service_name: "Nginx Proxy Manager"
+  roles:
+    - docker_compose_update

@@ -1,0 +1,10 @@
+---
+- hosts: all
+  become: true
+
+  vars:
+    service_name: Monitoring Stack
+    compose_dir: /home/rezayaghobi/docker/monitoring
+
+  roles:
+    - docker_compose_update

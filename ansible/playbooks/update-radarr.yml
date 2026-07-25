@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  vars:
+    compose_dir: "/home/rezayaghobi/docker/radarr"
+    service_name: "Radarr"
+  roles:
+    - docker_compose_update

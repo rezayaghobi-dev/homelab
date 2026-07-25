@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  vars:
+    compose_dir: "/home/rezayaghobi/docker/smartctl"
+    service_name: "Smartctl"
+  roles:
+    - docker_compose_update

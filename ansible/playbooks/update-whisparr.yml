@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  vars:
+    compose_dir: "/home/rezayaghobi/docker/whisparr"
+    service_name: "Whisparr"
+  roles:
+    - docker_compose_update
