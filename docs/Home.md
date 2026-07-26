@@ -25,7 +25,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 | **Host** | Ubuntu Server |
 | **Orchestration** | Docker Compose, one stack per service |
 | **Management** | Portainer, **DockScope** (3D visual dashboard) |
-| **Monitoring** | Prometheus + Grafana + cAdvisor + node-exporter |
+| **Monitoring** | Prometheus + Grafana + cAdvisor + node-exporter + **Loki + Alloy** (centralized logs) |
 | **Network** | Pi-hole (DNS filtering), Samba (file sharing), nginx (proxy managing) |
 | **Automation**     | n8n + **Semaphore** (Ansible Web UI) + **Ansible** (update playbooks) || **Media** | Plex + Sonarr/Radarr/Prowlarr + qBittorrent |
 | **Disk health** | Hard Disk Sentinel |

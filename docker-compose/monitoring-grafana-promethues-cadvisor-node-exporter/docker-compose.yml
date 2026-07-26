@@ -16,6 +16,7 @@ services:
 
     networks:
       - monitoring
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -24,6 +25,7 @@ services:
       - "3000:3000"
     volumes:
       - ./grafana/data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
     networks:
       - monitoring
 
@@ -54,10 +56,42 @@ services:
     networks:
       - monitoring
 
+  loki:
+    image: grafana/loki:3.7.3
+    container_name: loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./data/loki:/loki
+    mem_limit: 400m
+    cpus: 1
+    networks:
+      - monitoring
+
+  alloy:
+    image: grafana/alloy:v1.17.1
+    container_name: alloy
+    restart: unless-stopped
+    command:
+      - "run"
+      - "--server.http.listen-addr=0.0.0.0:12345"
+      - "--storage.path=/var/lib/alloy/data"
+      - "/etc/alloy/config.alloy"
+    ports:
+      - "12345:12345"
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/alloy:/var/lib/alloy/data
+    mem_limit: 300m
+    cpus: 0.5
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
 networks:
   monitoring:
     driver: bridge
-
-
-
-
