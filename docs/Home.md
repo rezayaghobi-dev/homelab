@@ -16,6 +16,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 - [Semaphore](Semaphore.md)
 - [DockScope](DockScope.md)
 - [Ansible Playbooks](AnsiblePlaybooks.md)
+- [Elastic Stack (ELK) — Lab](ElasticStack.md)
 
 ## At a glance
 
@@ -31,3 +32,5 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 | **AI Agent** | OpenHands + Ollama |
 
 This is a running system, not a demo — screenshots throughout this wiki are from the live dashboards.
+
+Not everything in this repo runs permanently — see [Elastic Stack (ELK) — Lab](ElasticStack.md) for a compose stack kept as a reference from a one-off learning exercise, not part of the always-on services above.

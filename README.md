@@ -33,6 +33,14 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **Semaphore** | `docker-compose/semaphore/` | Self-hosted Ansible UI (alternative to AWX) — see [Semaphore Guide](docs/Semaphore.md) |
 | **Ansible playbooks** | `ansible/` | Shared update role (pull → recreate → health-check → prune) reused across every stack, run via Semaphore — see [Ansible Playbooks](docs/AnsiblePlaybooks.md) |
 
+## Learning labs (not always-on)
+
+Not everything in this repo runs permanently. Some folders are kept purely as reference from one-off learning exercises for my DevOps cert coursework — the compose files work, but they're not part of the day-to-day stack above.
+
+| Lab | Folder | Purpose |
+|---|---|---|
+| **Elastic Stack (ELK)** | `docker-compose/elk/` | Elasticsearch + Kibana, security-enabled, sized for this hardware — a modern-workflow (Elastic Agent/Fleet) alternative to an older Filebeat/Metricbeat-based course reference. Not run continuously since Prometheus/Grafana already cover monitoring here — see [Elastic Stack (ELK)](docs/ElasticStack.md) |
+
 ## Repository structure
 
 ```
@@ -72,9 +80,12 @@ homelab/
 │   │   └── docker-compose.yaml
 │   ├── nginx-proxy-manager/
 │   │   └── docker-compose.yaml
-│   └── semaphore/
+│   ├── semaphore/
+│   │   ├── docker-compose.yml
+│   │   └── README.md
+│   └── elk/
 │       ├── docker-compose.yml
-│       └── README.md
+│       └── .env.example
 ├── ansible/
 │   └── playbooks/
 │       ├── roles/
@@ -110,6 +121,7 @@ homelab/
 │   ├── Semaphore.md
 │   ├── DockScope.md
 │   ├── AnsiblePlaybooks.md
+│   ├── ElasticStack.md
 │   └── images/
 └── .gitignore
 ```
@@ -126,7 +138,7 @@ docker compose up -d
 
 ## Updating a service
 
-Rather than pulling and recreating manually, every stack has a matching Ansible playbook that pulls the latest images, recreates containers, verifies they're healthy, and prunes unused images — run through Semaphore's web UI. See [Ansible Playbooks](docs/AnsiblePlaybooks.md) for details on how the shared role works.
+Rather than pulling and recreating manually, every always-on stack has a matching Ansible playbook that pulls the latest images, recreates containers, verifies they're healthy, and prunes unused images — run through Semaphore's web UI. See [Ansible Playbooks](docs/AnsiblePlaybooks.md) for details on how the shared role works.
 
 ## Security notes
 
@@ -143,6 +155,7 @@ Rather than pulling and recreating manually, every stack has a matching Ansible 
 - Free-tier cloud AI APIs enforce regional access restrictions automatically — worth checking a provider's terms before building around "free tier" as an assumption. See [AI Coding Agent](docs/AI-Agent.md).
 - Wildcard TLS certs (`*.home`) are rejected by browsers on single-label local domains — certificates for local reverse proxies need explicit hostnames listed instead. See [Reverse Proxy](docs/Reverse-Proxy.md).
 - Grouping all Compose stacks under one `docker-compose/` folder (rather than flat at repo root) kept the structure readable once Ansible playbooks were added as a sibling — a flat repo mixing deployment configs and automation code got confusing fast.
+- Newer Docker images can silently raise the minimum CPU generation required (base-OS changes, not anything in the compose file itself) — hit this running Elasticsearch 9.x on older hardware. See [Elastic Stack (ELK)](docs/ElasticStack.md).
 
 ## Roadmap
 

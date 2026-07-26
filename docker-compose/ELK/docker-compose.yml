@@ -1,0 +1,68 @@
+services:
+  elasticsearch:
+    image: elasticsearch:8.19.19
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.ml.enabled=false
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    mem_limit: 1500m
+    cpus: 1.5
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -u elastic:${ELASTIC_PASSWORD} http://localhost:9200 | grep -q cluster_name"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  kibana-setup:
+    image: elasticsearch:8.19.19
+    container_name: kibana-setup
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["curl"]
+    command:
+      - "-s"
+      - "-u"
+      - "elastic:${ELASTIC_PASSWORD}"
+      - "-X"
+      - "POST"
+      - "http://elasticsearch:9200/_security/user/kibana_system/_password"
+      - "-H"
+      - "Content-Type: application/json"
+      - "-d"
+      - "{\"password\":\"${KIBANA_PASSWORD}\"}"
+
+  kibana:
+    image: kibana:8.19.19
+    container_name: kibana
+    depends_on:
+      kibana-setup:
+        condition: service_completed_successfully
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
+      - XPACK_SECURITY_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
+      - XPACK_REPORTING_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
+      - NODE_OPTIONS=--max-old-space-size=1024
+    mem_limit: 1200m
+    cpus: 1
+    ports:
+      - "5601:5601"
+    restart: unless-stopped
+
+volumes:
+  es-data:
