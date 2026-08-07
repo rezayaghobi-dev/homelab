@@ -16,6 +16,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 - [Semaphore](Semaphore.md)
 - [DockScope](DockScope.md)
 - [Ansible Playbooks](AnsiblePlaybooks.md)
+- [GitLab CI/CD](GitLab-CICD.md)
 - [Elastic Stack (ELK) — Lab](ElasticStack.md)
 
 ## At a glance
@@ -30,6 +31,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 | **Automation**     | n8n + **Semaphore** (Ansible Web UI) + **Ansible** (update playbooks) || **Media** | Plex + Sonarr/Radarr/Prowlarr + qBittorrent |
 | **Disk health** | Hard Disk Sentinel |
 | **AI Agent** | OpenHands + Ollama |
+| **CI/CD** | Self-hosted **GitLab** (Omnibus) + Docker-executor **Runner** |
 
 This is a running system, not a demo — screenshots throughout this wiki are from the live dashboards.
 

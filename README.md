@@ -33,6 +33,7 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **Nginx Proxy Manager** | `docker-compose/nginx-proxy-manager/` | Reverse proxy giving every service a friendly `.home` hostname with locally-trusted HTTPS — see [Reverse Proxy](docs/Reverse-Proxy.md) |
 | **Semaphore** | `docker-compose/semaphore/` | Self-hosted Ansible UI (alternative to AWX) — see [Semaphore Guide](docs/Semaphore.md) |
 | **Ansible playbooks** | `ansible/` | Shared update role (pull → recreate → health-check → prune) reused across every stack, run via Semaphore — see [Ansible Playbooks](docs/AnsiblePlaybooks.md) |
+| **GitLab CI/CD** | `docker-compose/gitlab/` | Self-hosted GitLab Omnibus + Docker-executor Runner, tuned for this hardware and integrated with the monitoring stack — see [GitLab CI/CD](docs/GitLab-CICD.md) |
 
 ## Learning labs (not always-on)
 
@@ -92,6 +93,11 @@ homelab/
 │   ├── semaphore/
 │   │   ├── docker-compose.yml
 │   │   └── README.md
+│   ├── gitlab/
+│   │   ├── docker-compose.yml
+│   │   ├── config.toml.example
+│   │   └── backups/
+│   │       └── gitlab-backup.sh
 │   └── elk/
 │       ├── docker-compose.yml
 │       └── .env.example
@@ -130,8 +136,11 @@ homelab/
 │   ├── Semaphore.md
 │   ├── DockScope.md
 │   ├── AnsiblePlaybooks.md
+│   ├── GitLab-CICD.md
 │   ├── ElasticStack.md
 │   └── images/
+├── dashboards/
+│   └── gitlab-application-runner-metrics.json
 └── .gitignore
 ```
 
@@ -169,10 +178,13 @@ Rather than pulling and recreating manually, every always-on stack has a matchin
 - **Promtail is end-of-life as of March 2026** and removed outright as of Loki 3.7.3 — any current Loki setup should use Grafana Alloy for log shipping instead. Worth checking a project's actual current-recommended tooling before following an older tutorial, since agent names and workflows in this space have moved fast.
 - Bind-mounted container data directories can end up owned by the wrong UID after mixing `sudo` and non-`sudo` commands on the same folder — this silently broke Loki's ability to write its own working directory, surfacing only as a `permission denied` deep in its startup logs.
 - Community Grafana dashboards built for older Loki/Promtail label conventions (e.g. `container_name`) don't automatically work against a fresh Alloy-based label schema (`container`, `service_name`) — worth checking a dashboard's expected labels against your actual pipeline's labels before assuming an import error means something's broken on your end.
+- GitLab Omnibus's default RAM footprint assumes dedicated hardware — running it alongside an existing stack requires trimming Puma/Sidekiq workers explicitly, and disabling GitLab's own bundled monitoring in favor of the stack already running here.
+- `registry.gitlab.com` is geo-blocked under U.S. sanctions for several countries at the infrastructure level, independent of any account or token — surfaced as a Docker-executor helper-image pull failure. Fix was sourcing the helper image from Docker Hub instead. See [GitLab CI/CD](docs/GitLab-CICD.md).
+- Files written by a root-running container into a bind-mounted volume (GitLab's `config/`, `data/backups/`) are root-owned on the host — a backup script touching these needs to run as root and `chown` its own output back to the regular user, or every later interaction with the backup needs `sudo`.
 
 ## Roadmap
 
-- [ ] Add a self-hosted Gitea instance for private repos and CI runners
+- [x] ~~Add a self-hosted Gitea instance for private repos and CI runners~~ — done via self-hosted GitLab instead, see [GitLab CI/CD](docs/GitLab-CICD.md)
 - [ ] Auto-deploy via Watchtower on image updates
 - [ ] Expand monitoring with alerting rules
 

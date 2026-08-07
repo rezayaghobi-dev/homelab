@@ -1,0 +1,51 @@
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:19.2.1-ce.0
+    container_name: gitlab
+    restart: unless-stopped
+    hostname: gitlab.local
+    ports:
+      - "8929:80"
+      - "2224:22"
+      
+    volumes:
+      - ./config:/etc/gitlab
+      - ./logs:/var/log/gitlab
+      - ./data:/var/opt/gitlab
+    shm_size: '256m'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        gitlab_rails['monitoring_whitelist'] = ['127.0.0.1', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']
+        external_url 'http://192.168.100.6:8929'
+
+        nginx['listen_port'] = 80
+        nginx['listen_https'] = false
+
+        gitlab_rails['gitlab_shell_ssh_port'] = 2224
+
+        # Trim workers for a 4-core / 8GB host
+        puma['worker_processes'] = 2
+        puma['min_threads'] = 1
+        puma['max_threads'] = 4
+        sidekiq['max_concurrency'] = 10
+        postgresql['shared_buffers'] = "256MB"
+
+        # You already have this stack running — turn GitLab's copies off
+        prometheus_monitoring['enable'] = false
+        alertmanager['enable'] = false
+        node_exporter['enable'] = false
+        redis_exporter['enable'] = false
+        postgres_exporter['enable'] = false
+        gitlab_exporter['enable'] = false
+
+        # Registry off for now — flip to true later if you want it
+        registry['enable'] = false
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    container_name: gitlab-runner
+    restart: unless-stopped
+    ports:
+      - "9252:9252"
+    volumes:
+      - ./runner-config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock

@@ -34,6 +34,23 @@ Logs are browsable two ways in Grafana:
 - **Explore → Loki**, querying by label directly (e.g. `{container="grafana"}`)
 - **Drilldown → Logs**, a zero-config log browser bundled with Grafana — no dashboard needed to start exploring
 
+## GitLab & Runner metrics
+
+Self-hosted GitLab (see [GitLab CI/CD](GitLab-CICD.md)) exposes its own Prometheus-format metrics at `/-/metrics`, separate from Omnibus's bundled monitoring stack, which is disabled here in favor of this existing setup. The Runner similarly exposes its own metrics endpoint once `listen_address` is set in `config.toml`. Both are added as standard Prometheus scrape targets:
+
+```yaml
+- job_name: 'gitlab'
+  metrics_path: '/-/metrics'
+  static_configs:
+    - targets: ['192.168.100.6:8929']
+
+- job_name: 'gitlab-runner'
+  static_configs:
+    - targets: ['192.168.100.6:9252']
+```
+
+Visualized on a hand-built Grafana dashboard (`dashboards/gitlab-application-runner-metrics.json`) rather than GitLab's official community dashboard — that one targets metric names from Omnibus's own bundled Prometheus, which isn't what's running here.
+
 ## Why this matters
 
 On a lower-spec host, resource headroom is limited. Having per-container and host-level metrics from day one means a runaway container or a creeping memory leak shows up on a dashboard before it takes the box down — instead of finding out from an outage. Centralized logs close the other half of that gap: when a container *does* misbehave, its logs are searchable and correlated against the same timeline as its resource usage, rather than requiring a separate `docker logs` per container after the fact.
