@@ -88,7 +88,7 @@ By default GitLab only allows `127.0.0.1` to scrape metrics; since Prometheus re
 gitlab_rails['monitoring_whitelist'] = ['127.0.0.1', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']
 ```
 
-A custom Grafana dashboard (`dashboards/gitlab-application-runner-metrics.json`) was built by hand rather than importing GitLab's official community dashboard (ID `10990`) — that dashboard targets metric names from Omnibus's *own* bundled Prometheus setup, which was disabled above, so the metric names don't match what this external Prometheus actually scrapes. Panels cover Rails/Puma request queue latency, Sidekiq/Redis/Postgres performance, and Runner job/memory metrics.
+A custom Grafana dashboard (`dashboards/gitlab-application-runner-metrics.json`) was built by hand rather than importing GitLab's official community dashboard (ID `10990`) — that dashboard targets metric names from Omnibus's *own* bundled Prometheus setup, which was disabled above, so the metric names don't match what this external Prometheus actually scrapes. Panels cover Rails/Puma request queue latency, Sidekiq/Redis/Postgres performance, and Runner job/memory metrics — plus a live Loki logs panel embedded alongside the Rails/Puma metrics, so a latency spike and its corresponding nginx/workhorse log lines are visible in the same view. See [`dashboards/README.md`](../dashboards/README.md) for the full panel breakdown.
 
 Logs flow into the existing Loki/Alloy pipeline automatically, since Alloy discovers all running containers via the Docker socket — no GitLab-specific log config needed.
 
