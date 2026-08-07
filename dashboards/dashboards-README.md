@@ -17,11 +17,23 @@ Custom-built dashboard for the self-hosted GitLab instance and its Runner — se
 | **Cache & CI Metrics** | Rails cache performance, CI pipeline metrics |
 | **GitLab Runner Metrics** | Active jobs vs. concurrency limit, job execution duration, job errors/sec, Runner process memory footprint |
 
-Pulling live logs into the same row as request latency (rather than a separate Loki-only dashboard) was a deliberate choice — when Puma queue latency spikes, the correlated nginx/workhorse log lines are visible in the same view without switching to Explore.
+#### GitLab Rails & Puma Overview
+
+Request queue latency sits directly above a live Loki panel streaming GitLab's own nginx/workhorse logs — no separate dashboard needed to go from "latency spiked" to "here's what was actually happening at that moment":
+
+![Rails & Puma overview with embedded Loki logs](../docs/images/gitlab-dashboard-rails-puma-logs.png)
+
+The logs panel queries Loki directly rather than linking out to Explore, so a real request line like a `POST /api/v4/jobs/request` from the Runner polling for work is visible in the same timeline as the latency graph above it — pulling live logs into the same row as request latency (rather than a separate Loki-only dashboard) was a deliberate choice, not an afterthought.
+
+#### GitLab Runner Metrics
+
+![Runner active jobs, job duration, errors, and memory footprint](../docs/images/gitlab-dashboard-runner-metrics.png)
+
+Runner Memory Footprint hovering around 27–30 MiB confirms the Docker-executor Runner itself is genuinely lightweight at idle — the actual resource cost only shows up in the *job* containers it spins up temporarily, not the Runner process itself. Active Jobs vs. Limit tracks against the `concurrent = 1` cap set in `config.toml`, so a graph pinned at 1 during a running job (rather than climbing higher) confirms that RAM guardrail is actually being enforced, not just configured.
 
 ### Importing
 
-**Grafana → Dashboards → New → Import → Upload JSON file**, select `gitlab-application-runner-metrics.json`, map the `DS_PROMETHEUS` variable to your Prometheus data source when prompted.
+**Grafana → Dashboards → New → Import → Upload JSON file**, select `gitlab-application-runner-metrics.json`, map the `DS_PROMETHEUS` variable to your Prometheus data source when prompted. The Loki panel uses your default Loki data source directly — no variable mapping needed for that one, since there's only ever one Loki instance in this stack.
 
 ### Metric naming note
 
