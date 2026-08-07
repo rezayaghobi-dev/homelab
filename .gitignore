@@ -3,7 +3,6 @@
 *secrets*
 *.pem
 *.key
-*backup*
 **/config/
 **/data/
 *.db
