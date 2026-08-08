@@ -1,0 +1,24 @@
+stages:
+  - build
+
+.build-image:
+  stage: build
+  image: docker:27-cli
+  services: []   # not needed — we're using the host socket, not DinD
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker pull alpine:3.20
+    - docker build --pull --no-cache -t "$CI_REGISTRY_IMAGE/$IMAGE_NAME:latest" -t "$CI_REGISTRY_IMAGE/$IMAGE_NAME:$CI_COMMIT_SHORT_SHA" "images/$IMAGE_NAME"
+    - docker push "$CI_REGISTRY_IMAGE/$IMAGE_NAME:latest"
+    - docker push "$CI_REGISTRY_IMAGE/$IMAGE_NAME:$CI_COMMIT_SHORT_SHA"
+
+build-ssh-alpine:
+  extends: .build-image
+  variables:
+    IMAGE_NAME: ssh-alpine
+
+# Scheduled biweekly via GitLab's native Pipeline Schedules (Build > Pipeline
+# schedules), cron pattern: 0 3 */14 * *
+# Runs on both the schedule and regular pushes — no `rules` restriction —
+# so editing a Dockerfile also triggers an immediate rebuild.

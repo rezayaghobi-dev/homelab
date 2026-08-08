@@ -31,7 +31,7 @@ gitlab_exporter['enable'] = false
 
 Note: `grafana['enable']` is **not** a valid key on current Omnibus versions — GitLab dropped bundled Grafana entirely (not just disabled it), and setting this key causes a hard `reconfigure` failure (`Reading unsupported config value grafana`) rather than a silent no-op. Worth knowing if following an older guide.
 
-Container Registry is left disabled (`registry['enable'] = false`) — no current need for `docker build`/`push` in CI, and it's a one-line flip later if that changes.
+Container Registry was initially left disabled, then enabled once a real use case existed — see [Custom CI Runner Images](CI-Custom-Images.md), which builds and stores self-built Docker images for use inside pipelines rather than relying on generic public images.
 
 ![GitLab instance overview](images/gitlab-instance-overview.png)
 

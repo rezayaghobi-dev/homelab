@@ -34,6 +34,7 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **Semaphore** | `docker-compose/semaphore/` | Self-hosted Ansible UI (alternative to AWX) — see [Semaphore Guide](docs/Semaphore.md) |
 | **Ansible playbooks** | `ansible/` | Shared update role (pull → recreate → health-check → prune) reused across every stack, run via Semaphore — see [Ansible Playbooks](docs/AnsiblePlaybooks.md) |
 | **GitLab CI/CD** | `docker-compose/gitlab/` | Self-hosted GitLab Omnibus + Docker-executor Runner, tuned for this hardware and integrated with the monitoring stack — see [GitLab CI/CD](docs/GitLab-CICD.md) |
+| **Custom CI images** | `docker-compose/gitlab/ci-images-reference/` | Self-built, minimal Docker images for CI pipelines, stored in a self-hosted Container Registry, rebuilt biweekly — see [Custom CI Runner Images](docs/CI-Custom-Images.md) |
 
 ## Learning labs (not always-on)
 
@@ -96,6 +97,12 @@ homelab/
 │   ├── gitlab/
 │   │   ├── docker-compose.yml
 │   │   ├── config.toml.example
+│   │   ├── ci-images-reference/
+│   │   │   ├── README.md
+│   │   │   ├── .gitlab-ci.yml
+│   │   │   └── images/
+│   │   │       └── ssh-alpine/
+│   │   │           └── Dockerfile
 │   │   └── backups/
 │   │       └── gitlab-backup.sh
 │   └── elk/
@@ -137,6 +144,7 @@ homelab/
 │   ├── DockScope.md
 │   ├── AnsiblePlaybooks.md
 │   ├── GitLab-CICD.md
+│   ├── CI-Custom-Images.md
 │   ├── ElasticStack.md
 │   └── images/
 ├── dashboards/
@@ -181,6 +189,8 @@ Rather than pulling and recreating manually, every always-on stack has a matchin
 - GitLab Omnibus's default RAM footprint assumes dedicated hardware — running it alongside an existing stack requires trimming Puma/Sidekiq workers explicitly, and disabling GitLab's own bundled monitoring in favor of the stack already running here.
 - `registry.gitlab.com` is geo-blocked under U.S. sanctions for several countries at the infrastructure level, independent of any account or token — surfaced as a Docker-executor helper-image pull failure. Fix was sourcing the helper image from Docker Hub instead. See [GitLab CI/CD](docs/GitLab-CICD.md).
 - Files written by a root-running container into a bind-mounted volume (GitLab's `config/`, `data/backups/`) are root-owned on the host — a backup script touching these needs to run as root and `chown` its own output back to the regular user, or every later interaction with the backup needs `sudo`.
+- Tailscale actively manages `/etc/resolv.conf` on a host it's installed on, silently overriding local DNS resolvers (Pi-hole) even when `systemd-resolved` is configured correctly — worth checking `/etc/resolv.conf`'s own header before assuming a DNS setup is broken. See [Custom CI Runner Images](docs/CI-Custom-Images.md).
+- GitLab's Container Registry ties every image path to a real, existing project — unlike Docker Hub, pushing to an arbitrary namespace that has no matching project fails with a generic-looking `denied: requested access` error that reads like an auth problem but isn't one.
 
 ## Roadmap
 
