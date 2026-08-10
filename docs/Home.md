@@ -18,6 +18,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 - [Ansible Playbooks](AnsiblePlaybooks.md)
 - [GitLab CI/CD](GitLab-CICD.md)
 - [Custom CI Runner Images](CI-Custom-Images.md)
+- [Voting App — Mono-Repo](Voting-App-Monorepo.md)
 - [Elastic Stack (ELK) — Lab](ElasticStack.md)
 
 ## At a glance

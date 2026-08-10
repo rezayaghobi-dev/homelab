@@ -35,6 +35,8 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **Ansible playbooks** | `ansible/` | Shared update role (pull → recreate → health-check → prune) reused across every stack, run via Semaphore — see [Ansible Playbooks](docs/AnsiblePlaybooks.md) |
 | **GitLab CI/CD** | `docker-compose/gitlab/` | Self-hosted GitLab Omnibus + Docker-executor Runner, tuned for this hardware and integrated with the monitoring stack — see [GitLab CI/CD](docs/GitLab-CICD.md) |
 | **Custom CI images** | `docker-compose/gitlab/ci-images-reference/` | Self-built, minimal Docker images for CI pipelines, stored in a self-hosted Container Registry, rebuilt biweekly — see [Custom CI Runner Images](docs/CI-Custom-Images.md) |
+| **Voting app CI/CD** | `voting-app-monorepo` (self-hosted GitLab, referenced here) | Full pipeline: build, test, vulnerability scan, 3-environment deploy with rollback, load test, DB backup to MinIO — see [Voting App — Mono-Repo](docs/Voting-App-Monorepo.md) |
+| **Object storage** | `docker-compose/minio/` | Self-hosted MinIO (S3-compatible), `-cpuv1` release tag for CPU compatibility — backup target for the voting app's Postgres dumps |
 
 ## Learning labs (not always-on)
 
@@ -82,6 +84,8 @@ homelab/
 │   │   ├── whisparr/docker-compose.yml
 │   │   └── download-client-qbittorent/docker-compose.yml
 │   ├── minecraft/
+│   │   └── docker-compose.yml
+│   ├── minio/
 │   │   └── docker-compose.yml
 │   ├── sentinel/
 │   │   └── docker-compose.yml
@@ -145,6 +149,7 @@ homelab/
 │   ├── AnsiblePlaybooks.md
 │   ├── GitLab-CICD.md
 │   ├── CI-Custom-Images.md
+│   ├── Voting-App-Monorepo.md
 │   ├── ElasticStack.md
 │   └── images/
 ├── dashboards/
@@ -191,6 +196,9 @@ Rather than pulling and recreating manually, every always-on stack has a matchin
 - Files written by a root-running container into a bind-mounted volume (GitLab's `config/`, `data/backups/`) are root-owned on the host — a backup script touching these needs to run as root and `chown` its own output back to the regular user, or every later interaction with the backup needs `sudo`.
 - Tailscale actively manages `/etc/resolv.conf` on a host it's installed on, silently overriding local DNS resolvers (Pi-hole) even when `systemd-resolved` is configured correctly — worth checking `/etc/resolv.conf`'s own header before assuming a DNS setup is broken. See [Custom CI Runner Images](docs/CI-Custom-Images.md).
 - GitLab's Container Registry ties every image path to a real, existing project — unlike Docker Hub, pushing to an arbitrary namespace that has no matching project fails with a generic-looking `denied: requested access` error that reads like an auth problem but isn't one.
+- Docker images with `ENTRYPOINT` hardcoded to the tool itself (Trivy, k6, MinIO's `mc`) break GitLab CI's default script invocation with a confusing "unknown command sh" error — fixed the same way every time with `entrypoint: [""]`. See [Voting App — Mono-Repo](docs/Voting-App-Monorepo.md).
+- In Docker-outside-of-Docker setups, bind mounts (`-v host:container`) always resolve against the **host's** filesystem regardless of which container issued the `docker run` command — `docker cp` is the correct way to move a file into a container across that boundary, not a shared path assumption.
+- MinIO's current images require `x86-64-v2` CPU instructions and crash outright on older hardware (Phenom II here) with a `Fatal glibc error` — fixed by pinning to a `-cpuv1` release tag, a legacy compatibility branch MinIO still publishes for exactly this case.
 
 ## Roadmap
 
