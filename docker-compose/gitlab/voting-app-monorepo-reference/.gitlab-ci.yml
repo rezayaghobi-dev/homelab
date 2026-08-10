@@ -1,0 +1,183 @@
+stages:
+  - build
+  - test
+  - scan
+  - deploy
+  - load-test
+  - backup
+.build-service:
+  stage: build
+  image: docker:27-cli
+  services: []   # host-socket build, same pattern as ci-images — no DinD
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker build --pull  -t "$CI_REGISTRY_IMAGE/$SERVICE_NAME:latest" -t "$CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_SHORT_SHA" "$SERVICE_NAME"
+    - docker push "$CI_REGISTRY_IMAGE/$SERVICE_NAME:latest"
+    - docker push "$CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_SHORT_SHA"
+
+build-vote:
+  extends: .build-service
+  variables:
+    SERVICE_NAME: vote
+
+build-result:
+  extends: .build-service
+  variables:
+    SERVICE_NAME: result
+
+build-worker:
+  extends: .build-service
+  variables:
+    SERVICE_NAME: worker
+
+test-vote:
+  stage: test
+  image: docker:27-cli
+  services: []
+  script:
+    - docker network create test-net-$CI_JOB_ID
+    - docker run -d --name vote-test-$CI_JOB_ID --network test-net-$CI_JOB_ID "$CI_REGISTRY_IMAGE/vote:$CI_COMMIT_SHORT_SHA"
+    - sleep 5
+    - docker run --rm --network test-net-$CI_JOB_ID curlimages/curl:latest curl -sf "http://vote-test-$CI_JOB_ID:80/"
+  after_script:
+    - docker rm -f vote-test-$CI_JOB_ID || true
+    - docker network rm test-net-$CI_JOB_ID || true
+
+test-result:
+  stage: test
+  image: docker:27-cli
+  services: []
+  script:
+    - docker network create test-net-$CI_JOB_ID
+    - docker run -d --name result-test-$CI_JOB_ID --network test-net-$CI_JOB_ID "$CI_REGISTRY_IMAGE/result:$CI_COMMIT_SHORT_SHA"
+    - sleep 5
+    - docker run --rm --network test-net-$CI_JOB_ID curlimages/curl:latest curl -sf "http://result-test-$CI_JOB_ID:80/"
+  after_script:
+    - docker rm -f result-test-$CI_JOB_ID || true
+    - docker network rm test-net-$CI_JOB_ID || true
+
+test-worker:
+  stage: test
+  image: docker:27-cli
+  services: []
+  script:
+    - docker run -d --name worker-test-$CI_JOB_ID "$CI_REGISTRY_IMAGE/worker:$CI_COMMIT_SHORT_SHA"
+    - sleep 5
+    - |
+      STATUS=$(docker inspect -f '{{.State.Running}}' worker-test-$CI_JOB_ID)
+      if [ "$STATUS" != "true" ]; then
+        echo "worker exited unexpectedly on startup"
+        docker logs worker-test-$CI_JOB_ID
+        exit 1
+      fi
+  after_script:
+    - docker rm -f worker-test-$CI_JOB_ID || true
+.scan-service:
+  stage: scan
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  variables:
+    TRIVY_DB_REPOSITORY: "ghcr.io/aquasecurity/trivy-db:2"
+    TRIVY_CACHE_DIR: ".trivycache/"
+  cache:
+    key: trivy-db-cache
+    paths:
+      - .trivycache/
+  script:
+    - trivy image --exit-code 1 --ignore-unfixed --severity CRITICAL,HIGH --format table "$CI_REGISTRY_IMAGE/$SERVICE_NAME:$CI_COMMIT_SHORT_SHA"
+scan-vote:
+  extends: .scan-service
+  variables:
+    SERVICE_NAME: vote
+
+scan-result:
+  extends: .scan-service
+  variables:
+    SERVICE_NAME: result
+
+scan-worker:
+  extends: .scan-service
+  variables:
+    SERVICE_NAME: worker
+
+deploy-dev:
+  stage: deploy
+  image: docker:27-cli
+  services: []
+  variables:
+    IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
+    VOTE_PORT: "5100"
+    RESULT_PORT: "5101"
+  environment:
+    name: dev
+  script:
+    - docker compose -p voting-dev -f docker-compose.deploy.yml up -d
+    - sleep 10
+    - docker compose -p voting-dev -f docker-compose.deploy.yml ps
+    - docker compose -p voting-dev -f docker-compose.deploy.yml exec -T vote curl -sf http://localhost:80/
+    - docker compose -p voting-dev -f docker-compose.deploy.yml exec -T result curl -sf http://localhost:80/
+  after_script:
+    - docker compose -p voting-dev -f docker-compose.deploy.yml down -v
+
+deploy-staging:
+  stage: deploy
+  image: docker:27-cli
+  services: []
+  variables:
+    IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
+    VOTE_PORT: "5200"
+    RESULT_PORT: "5201"
+  environment:
+    name: staging
+    url: "http://192.168.100.6:5200"
+  when: manual
+  script:
+    - docker compose -p voting-staging -f docker-compose.deploy.yml up -d
+    - sleep 10
+    - docker compose -p voting-staging -f docker-compose.deploy.yml exec -T vote curl -sf http://localhost:80/
+    - docker compose -p voting-staging -f docker-compose.deploy.yml exec -T result curl -sf http://localhost:80/
+deploy-prod:
+  stage: deploy
+  image: docker:27-cli
+  services: []
+  variables:
+    IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
+    VOTE_PORT: "5300"
+    RESULT_PORT: "5301"
+  environment:
+    name: production
+    url: "http://192.168.100.6:5300"
+  when: manual
+  script:
+    - docker compose -p voting-prod -f docker-compose.deploy.yml up -d
+    - sleep 10
+    - docker compose -p voting-prod -f docker-compose.deploy.yml exec -T vote curl -sf http://localhost:80/
+    - docker compose -p voting-prod -f docker-compose.deploy.yml exec -T result curl -sf http://localhost:80/
+load-test-staging:
+  stage: load-test
+  image:
+    name: grafana/k6:latest
+    entrypoint: [""]
+  when: manual
+  needs: ["deploy-staging"]
+  script:
+    - k6 run -e TARGET_HOST=192.168.100.6 -e VOTE_PORT=5200 loadtest/vote-load-test.js
+backup-prod-db:
+  stage: backup
+  image: docker:27-cli
+  services: []
+  when: manual
+  needs: ["deploy-prod"]
+  script:
+    - export BACKUP_FILE="voting-prod-$(date +%Y%m%d-%H%M%S).sql.gz"
+    - docker exec voting-prod-db-1 pg_dump -U postgres postgres | gzip > "$BACKUP_FILE"
+    - docker create --name mc-helper-$CI_JOB_ID --entrypoint sh minio/mc:RELEASE.2025-08-13T08-35-41Z-cpuv1 -c "sleep 300"
+    - docker start mc-helper-$CI_JOB_ID
+    - docker cp "$BACKUP_FILE" mc-helper-$CI_JOB_ID:/tmp/"$BACKUP_FILE"
+    - docker exec mc-helper-$CI_JOB_ID mc alias set localminio http://192.168.100.6:9500 "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
+    - docker exec mc-helper-$CI_JOB_ID mc cp /tmp/"$BACKUP_FILE" localminio/postgres-backups/
+    - docker exec mc-helper-$CI_JOB_ID mc ls localminio/postgres-backups/
+  after_script:
+    - docker rm -f mc-helper-$CI_JOB_ID || true

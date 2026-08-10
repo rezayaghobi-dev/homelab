@@ -1,0 +1,8 @@
+# jaraco.context / wheel are vendored copies bundled inside setuptools,
+# not direct app dependencies. Fixing requires upgrading pip/setuptools,
+# which needs files.pythonhosted.org — currently unreachable from this
+# network (confirmed: pypi.org resolves fine, files.pythonhosted.org
+# times out). Revisit when connectivity allows, or if these ever appear
+# on the app's real runtime dependency surface.
+CVE-2026-23949
+CVE-2026-24049
