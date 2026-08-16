@@ -9,7 +9,10 @@ A self-hosted homelab running on Docker Compose, built and maintained on an Ubun
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat&logo=prometheus&logoColor=white)
 ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat&logo=grafana&logoColor=white)
 ![Loki](https://img.shields.io/badge/Loki-F5A623?style=flat&logo=grafana&logoColor=white)
-![Kubernetes](https://img.shields.io/badge/K3s-326CE5?style=flat&logo=kubernetes&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=flat&logo=kubernetes&logoColor=white)
+![K3s](https://img.shields.io/badge/K3s-FFC61C?style=flat&logo=k3s&logoColor=white)
+![Vagrant](https://img.shields.io/badge/Vagrant-1868F2?style=flat&logo=vagrant&logoColor=white)
+![GitLab](https://img.shields.io/badge/GitLab-FC6D26?style=flat&logo=gitlab&logoColor=white)
 
 ## Overview
 
@@ -47,6 +50,7 @@ Not everything in this repo runs permanently. Some folders are kept purely as re
 | Lab | Folder | Purpose |
 |---|---|---|
 | **Elastic Stack (ELK)** | `docker-compose/elk/` | Elasticsearch + Kibana, security-enabled, sized for this hardware — a modern-workflow (Elastic Agent/Fleet) alternative to an older Filebeat/Metricbeat-based course reference. Not run continuously since Loki now covers centralized logging here — see [Elastic Stack (ELK)](docs/ElasticStack.md) |
+| **Vagrant test VM** | `docker-compose/vagrant/` | Disposable Debian 12 VirtualBox VM (`bento/debian-12`) on a private-network IP, for testing provisioning scripts and configuration changes before touching the real host |
 
 ## Repository structure
 
@@ -111,9 +115,13 @@ homelab/
 │   │   │           └── Dockerfile
 │   │   └── backups/
 │   │       └── gitlab-backup.sh
-│   └── elk/
-│       ├── docker-compose.yml
-│       └── .env.example
+│   ├── elk/
+│   │   ├── docker-compose.yml
+│   │   └── .env.example
+│   └── vagrant/
+│       ├── Vagrantfile
+│       ├── bootstrap.sh
+│       └── README.md
 ├── ansible/
 │   └── playbooks/
 │       ├── roles/
