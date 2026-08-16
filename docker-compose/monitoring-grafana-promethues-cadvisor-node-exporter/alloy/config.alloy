@@ -1,0 +1,84 @@
+// Discover all running Docker containers
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// Extract a clean "container" label from the container name
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container_name"
+  }
+
+  rule {
+    target_label = "instance"
+    replacement  = constants.hostname
+  }
+}
+
+// Tail logs from every discovered container
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.containers.output
+  forward_to = [loki.write.default.receiver]
+}
+
+// Ship to the local Loki instance
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+// Discover K3s pods via the Kubernetes API
+discovery.kubernetes "k3s_pods" {
+  role = "pod"
+  api_server = "https://192.168.100.6:6443"
+  bearer_token_file = "/etc/alloy/k3s-token"
+  tls_config {
+    insecure_skip_verify = true
+  }
+}
+
+// Label pod logs with namespace/pod/container for clean Grafana filtering
+discovery.relabel "k3s_pods" {
+  targets = discovery.kubernetes.k3s_pods.targets
+  rule {
+    source_labels = ["__meta_kubernetes_namespace"]
+    target_label  = "namespace"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_name"]
+    target_label  = "pod"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_container_name"]
+    target_label  = "container"
+  }
+  rule {
+    target_label = "cluster"
+    replacement  = "k3s-homeserver"
+  }
+}
+
+// Tail logs from every discovered K3s pod
+loki.source.kubernetes "k3s_pods" {
+  targets    = discovery.relabel.k3s_pods.output
+  forward_to = [loki.write.default.receiver]
+
+  client {
+    api_server = "https://192.168.100.6:6443"
+    bearer_token_file = "/etc/alloy/k3s-token"
+    tls_config {
+      insecure_skip_verify = true
+    }
+  }
+}

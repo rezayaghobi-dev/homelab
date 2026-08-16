@@ -5,15 +5,13 @@ services:
     restart: unless-stopped
     ports:
       - "9090:9090"
-
     volumes:
       - ./prometheus:/etc/prometheus:ro
       - ./data/prometheus:/prometheus
-
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-
+      - "--web.enable-lifecycle"
     networks:
       - monitoring
 
@@ -64,6 +62,7 @@ services:
     ports:
       - "3100:3100"
     volumes:
+      - ./loki/local-config.yaml:/etc/loki/local-config.yaml:ro    
       - ./data/loki:/loki
     mem_limit: 400m
     cpus: 1
@@ -83,6 +82,7 @@ services:
       - "12345:12345"
     volumes:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - ./alloy/k3s-token:/etc/alloy/k3s-token:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./data/alloy:/var/lib/alloy/data
     mem_limit: 300m

@@ -21,3 +21,16 @@ scrape_configs:
   - job_name: 'gitlab-runner'
     static_configs:
       - targets: ['192.168.100.6:9252'] # Or your runner container name/IP
+
+  - job_name: 'kube-state-metrics'
+    static_configs:
+      - targets: ['192.168.100.6:30900']
+
+  - job_name: 'k3s-kubelet-cadvisor'
+    scheme: https
+    metrics_path: /metrics/cadvisor
+    tls_config:
+      insecure_skip_verify: true
+    bearer_token_file: /etc/prometheus/k3s-token
+    static_configs:
+      - targets: ['192.168.100.6:10250']
