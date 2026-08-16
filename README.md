@@ -9,6 +9,7 @@ A self-hosted homelab running on Docker Compose, built and maintained on an Ubun
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat&logo=prometheus&logoColor=white)
 ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat&logo=grafana&logoColor=white)
 ![Loki](https://img.shields.io/badge/Loki-F5A623?style=flat&logo=grafana&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/K3s-326CE5?style=flat&logo=kubernetes&logoColor=white)
 
 ## Overview
 
@@ -37,6 +38,7 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **Custom CI images** | `docker-compose/gitlab/ci-images-reference/` | Self-built, minimal Docker images for CI pipelines, stored in a self-hosted Container Registry, rebuilt biweekly — see [Custom CI Runner Images](docs/CI-Custom-Images.md) |
 | **Voting app CI/CD** | `voting-app-monorepo` (self-hosted GitLab, referenced here) | Full pipeline: build, test, vulnerability scan, 3-environment deploy with rollback, load test, DB backup to MinIO — see [Voting App — Mono-Repo](docs/Voting-App-Monorepo.md) |
 | **Object storage** | `docker-compose/minio/` | Self-hosted MinIO (S3-compatible), `-cpuv1` release tag for CPU compatibility — backup target for the voting app's Postgres dumps |
+| **K3s cluster** | `kubernetes/` | Single-node K3s cluster running alongside the Docker Compose stack, fronted by the same reverse proxy via NodePort, monitored through the same Prometheus/Grafana/Loki stack — see [K3s](docs/K3s.md) |
 
 ## Learning labs (not always-on)
 
@@ -137,6 +139,7 @@ homelab/
 │   ├── Home.md
 │   ├── Architecture-and-Hardware.md
 │   ├── Monitoring-Stack.md
+│   ├── K3s.md
 │   ├── Network-Services.md
 │   ├── Media-Automation.md
 │   ├── Workflow-Automation.md
@@ -152,8 +155,16 @@ homelab/
 │   ├── Voting-App-Monorepo.md
 │   ├── ElasticStack.md
 │   └── images/
+├── kubernetes/
+│   ├── namespace-apps.yaml
+│   ├── limitrange-resourcequota.yaml
+│   ├── kube-state-metrics/
+│   │   └── rbac-patch.yaml
+│   └── backups/
+│       └── k3s-state-backup.sh
 ├── dashboards/
-│   └── gitlab-application-runner-metrics.json
+│   ├── gitlab-application-runner-metrics.json
+│   └── k3s-professional-log-analyzer.json
 └── .gitignore
 ```
 
@@ -199,6 +210,9 @@ Rather than pulling and recreating manually, every always-on stack has a matchin
 - Docker images with `ENTRYPOINT` hardcoded to the tool itself (Trivy, k6, MinIO's `mc`) break GitLab CI's default script invocation with a confusing "unknown command sh" error — fixed the same way every time with `entrypoint: [""]`. See [Voting App — Mono-Repo](docs/Voting-App-Monorepo.md).
 - In Docker-outside-of-Docker setups, bind mounts (`-v host:container`) always resolve against the **host's** filesystem regardless of which container issued the `docker run` command — `docker cp` is the correct way to move a file into a container across that boundary, not a shared path assumption.
 - MinIO's current images require `x86-64-v2` CPU instructions and crash outright on older hardware (Phenom II here) with a `Fatal glibc error` — fixed by pinning to a `-cpuv1` release tag, a legacy compatibility branch MinIO still publishes for exactly this case.
+- `kube-state-metrics`'s default ClusterRole doesn't cover every resource it tries to watch (`NetworkPolicy`, `MutatingWebhookConfiguration`, `ValidatingWebhookConfiguration`, and more) — surfaces as repeated `reflector.go` `Failed to list ... is forbidden` warnings rather than a single clear error. Fixed with a supplementary `ClusterRole`/`ClusterRoleBinding` granting just the missing `list`/`watch` verbs. See [K3s](docs/K3s.md).
+- A pod doesn't pick up a widened RBAC grant on its own — its informers already failed and cached that state. `kubectl rollout restart` is required after any `ClusterRole` change for an already-running pod to actually benefit from it.
+- Old log lines don't disappear from Grafana/Loki after a fix ships — they just age out of whatever time window the dashboard is querying. A dropping "Errors total" over a few minutes is the real signal that a fix worked, not an empty panel immediately after applying it.
 
 ## Roadmap
 

@@ -6,6 +6,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 
 - [Architecture and Hardware](Architecture-and-Hardware.md)
 - [Monitoring Stack](Monitoring-Stack.md)
+- [K3s](K3s.md)
 - [Network Services](Network-Services.md)
 - [Media Automation](Media-Automation.md)
 - [Workflow Automation](Workflow-Automation.md)
@@ -34,6 +35,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 | **Disk health** | Hard Disk Sentinel |
 | **AI Agent** | OpenHands + Ollama |
 | **CI/CD** | Self-hosted **GitLab** (Omnibus) + Docker-executor **Runner** |
+| **Orchestration (K8s)** | Single-node **K3s** cluster, monitored via the same Prometheus/Grafana/Loki stack |
 
 This is a running system, not a demo — screenshots throughout this wiki are from the live dashboards.
 

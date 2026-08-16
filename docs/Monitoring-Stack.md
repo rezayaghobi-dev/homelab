@@ -10,6 +10,7 @@ Prometheus, Grafana, cAdvisor, and node-exporter running together give full visi
 - **Grafana** — dashboards on top of Prometheus and Loki data
 - **Loki** — stores and indexes logs by label, not full text, keeping it lightweight
 - **Grafana Alloy** — discovers every running container and ships its logs to Loki
+- **kube-state-metrics** — exposes K3s object-level state (deployments, pod restarts, resource requests/limits) as Prometheus metrics
 
 ## Prometheus targets
 
@@ -50,6 +51,17 @@ Self-hosted GitLab (see [GitLab CI/CD](GitLab-CICD.md)) exposes its own Promethe
 ```
 
 Visualized on a hand-built Grafana dashboard (`dashboards/gitlab-application-runner-metrics.json`) rather than GitLab's official community dashboard — that one targets metric names from Omnibus's own bundled Prometheus, which isn't what's running here.
+
+## K3s cluster monitoring
+
+The K3s cluster (see [K3s](K3s.md)) is folded into this same stack rather than running a second, cluster-local Prometheus/Grafana/Loki — cAdvisor here only watches the Docker socket, so it has zero visibility into K8s pods on its own. Two additions close that gap:
+
+- **[`kube-state-metrics`](https://github.com/kubernetes/kube-state-metrics)** — deployed into the cluster, scraped as a standard Prometheus target, exposing object-level state (replica counts, pod restarts, resource requests vs. limits).
+- **Kubelet's built-in cAdvisor** — already running as part of K3s, scraped at `https://<host>:10250/metrics/cadvisor` for per-pod CPU/memory, authenticated via a scoped bearer-token `ServiceAccount` rather than the open endpoint the Docker-side cAdvisor uses.
+
+Logs follow the same pattern: Grafana Alloy's `discovery.kubernetes` + `loki.source.kubernetes` components stream pod logs into the same Loki instance as the Docker container logs, tagged with `cluster="k3s-homeserver"` to distinguish K3s-origin entries from Docker-origin ones at query time.
+
+**K3s Professional Log Analyzer** (`dashboards/k3s-professional-log-analyzer.json`) is the hand-built Grafana dashboard for this — namespace/pod/container filters, an errors-vs-warnings timeline, top error-producing pods, and a live filtered log stream. Its LogQL queries carry a `!~` exclusion for known-benign noise (CoreDNS's optional-config-file glob warning, `kube-state-metrics`'s `EndpointSlice` deprecation notice) so the Errors/Warnings panels stay focused on things actually worth investigating rather than cosmetic log lines. See [Lessons Learned](Lessons-Learned.md) for how that gap was found and closed.
 
 ## Why this matters
 
