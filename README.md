@@ -49,8 +49,8 @@ Not everything in this repo runs permanently. Some folders are kept purely as re
 
 | Lab | Folder | Purpose |
 |---|---|---|
-| **Elastic Stack (ELK)** | `docker-compose/elk/` | Elasticsearch + Kibana, security-enabled, sized for this hardware — a modern-workflow (Elastic Agent/Fleet) alternative to an older Filebeat/Metricbeat-based course reference. Not run continuously since Loki now covers centralized logging here — see [Elastic Stack (ELK)](docs/ElasticStack.md) |
-| **Vagrant test VM** | `docker-compose/vagrant/` | Disposable Debian 12 VirtualBox VM (`bento/debian-12`) on a private-network IP, for testing provisioning scripts and configuration changes before touching the real host |
+| **Elastic Stack (ELK)** | `docker-compose/ELK/` | Elasticsearch + Kibana, security-enabled, sized for this hardware — a modern-workflow (Elastic Agent/Fleet) alternative to an older Filebeat/Metricbeat-based course reference. Not run continuously since Loki now covers centralized logging here — see [Elastic Stack (ELK)](docs/ElasticStack.md) |
+| **Vagrant test VM** | `vagrant/` | Disposable Debian 12 VirtualBox VM (`bento/debian-12`) on a private-network IP, for testing provisioning scripts and configuration changes before touching the real host |
 
 ## Repository structure
 
@@ -115,13 +115,9 @@ homelab/
 │   │   │           └── Dockerfile
 │   │   └── backups/
 │   │       └── gitlab-backup.sh
-│   ├── elk/
-│   │   ├── docker-compose.yml
-│   │   └── .env.example
-│   └── vagrant/
-│       ├── Vagrantfile
-│       ├── bootstrap.sh
-│       └── README.md
+│   └── ELK/
+│       ├── docker-compose.yml
+│       └── .env.example
 ├── ansible/
 │   └── playbooks/
 │       ├── roles/
@@ -164,15 +160,27 @@ homelab/
 │   ├── ElasticStack.md
 │   └── images/
 ├── kubernetes/
-│   ├── namespace-apps.yaml
-│   ├── limitrange-resourcequota.yaml
+│   ├── alloy-rbac/
+│   │   └── alloy-rbac.yaml
 │   ├── kube-state-metrics/
-│   │   └── rbac-patch.yaml
-│   └── backups/
-│       └── k3s-state-backup.sh
+│   │   ├── kube-state-metrics.yaml
+│   │   └── prometheus-rbac.yaml
+│   └── resource-limits/
+│       └── resource-limits.yaml
 ├── dashboards/
-│   ├── gitlab-application-runner-metrics.json
-│   └── k3s-professional-log-analyzer.json
+│   ├── gitlab-dashboards/
+│   │   ├── dashboards-README.md
+│   │   └── gitlab-application-runner-metrics.json
+│   └── kubernetes-dashboards/
+│       ├── README.md
+│       ├── dashboard-1786902530431.json
+│       ├── dashboard-1786902563692.json
+│       ├── dashboard-1786902586059.json
+│       └── dashboard-1786902623268.json
+├── vagrant/
+│   ├── Vagrantfile
+│   ├── bootstrap.sh
+│   └── README.md
 └── .gitignore
 ```
 

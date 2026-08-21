@@ -29,7 +29,7 @@ services:
     mem_limit: 1200m
 ```
 
-(Full compose file with the setup container that provisions the `kibana_system` password is in `docker-compose/elk/`.)
+(Full compose file with the setup container that provisions the `kibana_system` password is in `docker-compose/ELK/`.)
 
 ## Hardware roadblocks — the actually useful part of this lab
 
