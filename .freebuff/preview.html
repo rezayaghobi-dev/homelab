@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Homelab — Infrastructure Overview</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --orange: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    h1 span { color: var(--accent); }
+    .subtitle { color: var(--text-muted); margin-bottom: 2rem; font-size: 1.05rem; }
+    .badges { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 2rem; }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.65rem;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .badge-docker { background: #2496ED; }
+    .badge-ubuntu { background: #E95420; }
+    .badge-ansible { background: #EE0000; }
+    .badge-prometheus { background: #E6522C; }
+    .badge-grafana { background: #F46800; }
+    .badge-k3s { background: #FFC61C; color: #000; }
+    .badge-gitlab { background: #FC6D26; }
+    .badge-vagrant { background: #1868F2; }
+    .section { margin-bottom: 2.5rem; }
+    .section h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.1rem 1.3rem;
+      transition: border-color 0.15s;
+    }
+    .card:hover { border-color: var(--accent); }
+    .card h3 { font-size: 1rem; margin-bottom: 0.3rem; }
+    .card h3 .emoji { margin-right: 0.3rem; }
+    .card p { color: var(--text-muted); font-size: 0.88rem; }
+    .card .path {
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.78rem;
+      color: var(--accent);
+      background: rgba(88,166,255,0.08);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+    .status { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.4rem; vertical-align: middle; }
+    .status-on { background: var(--green); }
+    .status-lab { background: var(--orange); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--text-muted); font-weight: 600; }
+    td:first-child { font-weight: 500; }
+    .tree {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem 1.5rem;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      color: var(--text-muted);
+    }
+    .tree strong { color: var(--text); font-weight: 600; }
+    .footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    .footer a { color: var(--accent); text-decoration: none; }
+    .ansible-section { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+      .ansible-section { grid-template-columns: 1fr; }
+      body { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🏠 <span>Homelab</span></h1>
+  <p class="subtitle">A self-hosted homelab running on Docker Compose, built and maintained on Ubuntu Server.</p>
+
+  <div class="badges">
+    <span class="badge badge-docker">Docker</span>
+    <span class="badge badge-docker">Docker Compose</span>
+    <span class="badge badge-ubuntu">Ubuntu Server</span>
+    <span class="badge badge-ansible">Ansible</span>
+    <span class="badge badge-prometheus">Prometheus</span>
+    <span class="badge badge-grafana">Grafana</span>
+    <span class="badge badge-k3s">K3s</span>
+    <span class="badge badge-gitlab">GitLab</span>
+    <span class="badge badge-vagrant">Vagrant</span>
+  </div>
+
+  <div class="section">
+    <h2>🟢 Always-On Services</h2>
+    <div class="grid">
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">📊</span>Monitoring Stack</h3>
+        <p>Prometheus, Grafana, cAdvisor, node-exporter, Loki + Alloy for centralized logging</p>
+        <span class="path">docker-compose/monitoring-grafana-promethues-cadvisor-node-exporter/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">🛡️</span>Pi-hole</h3>
+        <p>Network-wide DNS-level ad and tracker blocking</p>
+        <span class="path">docker-compose/pihole/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">🐳</span>Portainer</h3>
+        <p>Web UI for managing and monitoring all Docker containers</p>
+        <span class="path">docker-compose/portainer/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">🔮</span>DockScope</h3>
+        <p>3D visual dashboard mapping containers, networks, and dependencies</p>
+        <span class="path">docker-compose/dockscope/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">⚡</span>n8n</h3>
+        <p>Workflow automation engine, backed by Postgres</p>
+        <span class="path">docker-compose/n8n/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">📁</span>Samba</h3>
+        <p>Network file sharing across LAN devices</p>
+        <span class="path">docker-compose/samba/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">📂</span>Filebrowser</h3>
+        <p>Web-based file manager for the server's storage</p>
+        <span class="path">docker-compose/filebrowser/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">🎬</span>Media Stack</h3>
+        <p>Plex, Sonarr/Radarr/Prowlarr/Whisparr, qBittorrent</p>
+        <span class="path">docker-compose/mediastack/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">⛏️</span>Minecraft</h3>
+        <p>Self-hosted game server</p>
+        <span class="path">docker-compose/minecraft/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">🔍</span>Sentinel + smartctl</h3>
+        <p>Disk health monitoring via S.M.A.R.T. data</p>
+        <span class="path">docker-compose/sentinel/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">🤖</span>OpenHands</h3>
+        <p>Self-hosted AI coding agent backed by Ollama</p>
+        <span class="path">docker-compose/openhands/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">🔀</span>Nginx Proxy Manager</h3>
+        <p>Reverse proxy with friendly .home hostnames and local HTTPS</p>
+        <span class="path">docker-compose/nginx-proxy-manager/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">🎯</span>Semaphore</h3>
+        <p>Self-hosted Ansible UI for running playbooks</p>
+        <span class="path">docker-compose/semaphore/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">🦊</span>GitLab CI/CD</h3>
+        <p>Self-hosted GitLab Omnibus + Docker-executor Runner</p>
+        <span class="path">docker-compose/gitlab/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">📦</span>MinIO</h3>
+        <p>S3-compatible object storage, backup target</p>
+        <span class="path">docker-compose/minio/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-on"></span><span class="emoji">☸️</span>K3s Cluster</h3>
+        <p>Single-node K3s alongside Docker Compose, monitored by same stack</p>
+        <span class="path">kubernetes/</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>🧪 Learning Labs (not always-on)</h2>
+    <div class="grid">
+      <div class="card">
+        <h3><span class="status status-lab"></span><span class="emoji">🔎</span>Elastic Stack (ELK)</h3>
+        <p>Elasticsearch + Kibana, security-enabled — replaced by Loki for daily logging</p>
+        <span class="path">docker-compose/ELK/</span>
+      </div>
+      <div class="card">
+        <h3><span class="status status-lab"></span><span class="emoji">💻</span>Vagrant Test VM</h3>
+        <p>Disposable Debian 12 VM for testing provisioning before touching production</p>
+        <span class="path">vagrant/</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>⚙️ Ansible Automation</h2>
+    <div class="ansible-section">
+      <div class="card">
+        <h3><span class="emoji">🔄</span>Update Playbooks</h3>
+        <p>16 thin playbooks, one per stack, all delegating to the shared <code>docker_compose_update</code> role: pull → recreate → health-check → prune. Run through Semaphore.</p>
+        <span class="path">ansible/update-playbooks/</span>
+      </div>
+      <div class="card">
+        <h3><span class="emoji">🏗️</span>Server Provisioning</h3>
+        <p>Full server preparation: packages, sshd hardening, iptables, fail2ban, auditd, Docker CE, Nexus + Traefik. Tested against Vagrant first.</p>
+        <span class="path">ansible/preparing-playbook/</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>🗂️ Repository Structure</h2>
+    <div class="tree">
+<strong>homelab/</strong><br>
+├── <strong>docker-compose/</strong>          # every service in its own folder<br>
+│   ├── monitoring-grafana-promethues-cadvisor-node-exporter/<br>
+│   ├── pihole/ &nbsp; portainer/ &nbsp; dockscope/ &nbsp; n8n/<br>
+│   ├── samba/ &nbsp; filebrowser/ &nbsp; mediastack/ &nbsp; minecraft/<br>
+│   ├── sentinel/ &nbsp; smartctl/ &nbsp; minio/<br>
+│   ├── openhands/ &nbsp; nginx-proxy-manager/ &nbsp; semaphore/<br>
+│   ├── gitlab/ &nbsp; (with ci-images-reference/ &amp; backups/)<br>
+│   └── ELK/<br>
+├── <strong>ansible/</strong><br>
+│   ├── <strong>update-playbooks/</strong> &nbsp; # day-to-day stack updates<br>
+│   │&nbsp;&nbsp;&nbsp; ├── roles/docker_compose_update/<br>
+│   │&nbsp;&nbsp;&nbsp; └── update-*.yml + ping.yml<br>
+│   └── <strong>preparing-playbook/</strong> # server provisioning<br>
+│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └── reza-ansible/ (inventory, roles, vault)<br>
+├── <strong>docs/</strong>                    # detailed write-ups per topic<br>
+├── <strong>kubernetes/</strong>              # K3s manifests &amp; RBAC patches<br>
+├── <strong>dashboards/</strong>              # Grafana dashboard JSON exports<br>
+├── <strong>vagrant/</strong>                 # disposable test VM<br>
+└── <strong>scripts/</strong>                 # linux_setup.sh provisioning script
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📈 Grafana Dashboards</h2>
+    <table>
+      <thead><tr><th>Dashboard</th><th>Data Sources</th><th>Type</th></tr></thead>
+      <tbody>
+        <tr><td>GitLab Rails &amp; Puma Overview</td><td>Prometheus + Loki</td><td>Custom-built</td></tr>
+        <tr><td>GitLab Runner Metrics</td><td>Prometheus</td><td>Custom-built</td></tr>
+        <tr><td>Kubernetes / Pods</td><td>Prometheus</td><td>Community import</td></tr>
+        <tr><td>K3s Cluster Overview</td><td>Prometheus</td><td>Community import</td></tr>
+        <tr><td>K3s Unified App Dashboard</td><td>Prometheus + Loki</td><td>Custom-built</td></tr>
+        <tr><td>K3s Professional Log Analyzer</td><td>Loki</td><td>Custom-built</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <p><strong>Reza</strong> — Computer Networks student, LPIC-1 &nbsp;|&nbsp; <a href="https://github.com/rezayaghobi-dev">GitHub</a></p>
+    <p style="margin-top:0.4rem;">Infrastructure-as-code for a real, running homelab — configs only, no secrets or runtime data.</p>
+  </div>
+
+</body>
+</html>
