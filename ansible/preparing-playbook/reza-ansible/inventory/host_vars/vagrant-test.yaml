@@ -1,0 +1,32 @@
+---
+# --- Overrides for local Vagrant testing ---
+# Ansible dict vars are REPLACED wholesale by more specific scopes (this
+# file beats group_vars/all/preparing.yaml), so each dict below is
+# restated in full, not merged.
+
+# sshd must keep listening on the REAL guest port (22). Vagrant forwards
+# host:2222 -> guest:22, not guest:2222, so reusing ansible_port (2222)
+# here — like group_vars/all/preparing.yaml does — would configure sshd
+# to listen where nothing forwards to, locking you out on the next
+# connection.
+sshd_config:
+  Port: 22
+  ListenAddress: 0.0.0.0
+  PermitRootLogin: without-password
+  PasswordAuthentication: "yes"
+  # root-only AllowUsers would lock out the 'vagrant' user Ansible/vagrant
+  # ssh connect as. Keep both.
+  AllowUsers: "root vagrant"
+  AllowGroups: "root vagrant"
+
+# Teacher's prod trusted IPs (87.247.187.145, 10.60.10.0/24) don't apply
+# to a local box. 10.0.2.0/24 is VirtualBox's default NAT subnet.
+iptables:
+  network_adapter_access:
+    - lo
+  tcp_port_access:
+    - 80
+    - 443
+  trusted_IP: []
+  trusted_Range:
+    - 10.0.2.0/24

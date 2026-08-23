@@ -1,0 +1,7 @@
+---
+- name: Install lynis from Debian repo
+  apt:
+    name: lynis
+    state: present
+    update_cache: yes
+  tags: lynis

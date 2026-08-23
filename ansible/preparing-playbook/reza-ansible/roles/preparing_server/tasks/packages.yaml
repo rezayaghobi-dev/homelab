@@ -1,0 +1,33 @@
+---
+- name: Update apt cache (no full-system/kernel upgrade — avoids grub-pc + shared-folder breakage)
+  apt:
+    update_cache: yes
+    cache_valid_time: 86400
+- name: Stop systemd-timesyncd (conflicts with the ntp package below)
+  ansible.builtin.systemd:
+    name: systemd-timesyncd
+    state: stopped
+    enabled: no
+  ignore_errors: yes
+
+- name: Remove systemd-timesyncd so ntp can install cleanly
+  apt:
+    name: systemd-timesyncd
+    state: absent
+  ignore_errors: yes
+
+- name: Install basic tools
+  apt:
+    name: "{{ packages }}"
+    state: present
+    force_apt_get: yes
+    update_cache: yes
+
+- name: Set hostname
+  hostname:
+    name: '{{ inventory_hostname }}'
+
+- name: Fix /etc/hosts
+  template:
+    src: "hosts.j2"
+    dest: "/etc/hosts"

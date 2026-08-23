@@ -36,7 +36,8 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **OpenHands** | `docker-compose/openhands/` | Self-hosted AI coding agent (OpenHands/agent-canvas) backed by Ollama — see [AI Coding Agent](docs/AI-Agent.md) |
 | **Nginx Proxy Manager** | `docker-compose/nginx-proxy-manager/` | Reverse proxy giving every service a friendly `.home` hostname with locally-trusted HTTPS — see [Reverse Proxy](docs/Reverse-Proxy.md) |
 | **Semaphore** | `docker-compose/semaphore/` | Self-hosted Ansible UI (alternative to AWX) — see [Semaphore Guide](docs/Semaphore.md) |
-| **Ansible playbooks** | `ansible/` | Shared update role (pull → recreate → health-check → prune) reused across every stack, run via Semaphore — see [Ansible Playbooks](docs/AnsiblePlaybooks.md) |
+| **Ansible playbooks** | `ansible/update-playbooks/` | Shared update role (pull → recreate → health-check → prune) reused across every stack, run via Semaphore — see [Ansible Playbooks](docs/AnsiblePlaybooks.md) |
+| **Server provisioning** | `ansible/preparing-playbook/` | Full server preparation playbook (packages, hardening, Docker, Nexus/Traefik) tested against Vagrant first — see [Ansible README](ansible/README.md) |
 | **GitLab CI/CD** | `docker-compose/gitlab/` | Self-hosted GitLab Omnibus + Docker-executor Runner, tuned for this hardware and integrated with the monitoring stack — see [GitLab CI/CD](docs/GitLab-CICD.md) |
 | **Custom CI images** | `docker-compose/gitlab/ci-images-reference/` | Self-built, minimal Docker images for CI pipelines, stored in a self-hosted Container Registry, rebuilt biweekly — see [Custom CI Runner Images](docs/CI-Custom-Images.md) |
 | **Voting app CI/CD** | `voting-app-monorepo` (self-hosted GitLab, referenced here) | Full pipeline: build, test, vulnerability scan, 3-environment deploy with rollback, load test, DB backup to MinIO — see [Voting App — Mono-Repo](docs/Voting-App-Monorepo.md) |
@@ -119,26 +120,40 @@ homelab/
 │       ├── docker-compose.yml
 │       └── .env.example
 ├── ansible/
-│   └── playbooks/
-│       ├── roles/
-│       │   └── docker_compose_update/
-│       │       └── tasks/main.yml
-│       ├── update-filebrowser.yml
-│       ├── update-n8n.yml
-│       ├── update-npm.yml
-│       ├── update-pihole.yml
-│       ├── update-plex.yml
-│       ├── update-portainer.yml
-│       ├── update-prowlarr.yml
-│       ├── update-radarr.yml
-│       ├── update-samba.yml
-│       ├── update-sentinel.yml
-│       ├── update-smartctl.yml
-│       ├── update-sonarr.yml
-│       ├── update-whisparr.yml
-│       ├── update-agent-canvas.yml
-│       ├── update-grafana.yml
-│       └── ping.yml
+│   ├── README.md
+│   ├── update-playbooks/
+│   │   ├── roles/
+│   │   │   └── docker_compose_update/
+│   │   │       └── tasks/main.yml
+│   │   ├── update-filebrowser.yml
+│   │   ├── update-n8n.yml
+│   │   ├── update-npm.yml
+│   │   ├── update-pihole.yml
+│   │   ├── update-plex.yml
+│   │   ├── update-portainer.yml
+│   │   ├── update-prowlarr.yml
+│   │   ├── update-radarr.yml
+│   │   ├── update-samba.yml
+│   │   ├── update-sentinel.yml
+│   │   ├── update-smartctl.yml
+│   │   ├── update-sonarr.yml
+│   │   ├── update-whisparr.yml
+│   │   ├── update-agent-canvas.yml
+│   │   ├── update-grafana.yml
+│   │   └── ping.yml
+│   └── preparing-playbook/
+│       └── reza-ansible/
+│           ├── ansible.cfg
+│           ├── preparing.yaml
+│           ├── repo-server.yaml
+│           ├── inventory/
+│           │   ├── host.yaml
+│           │   ├── group_vars/all/
+│           │   └── host_vars/vagrant-test.yaml
+│           └── roles/
+│               ├── preparing_server/
+│               ├── docker/
+│               └── repo-server/
 ├── docs/
 │   ├── Home.md
 │   ├── Architecture-and-Hardware.md

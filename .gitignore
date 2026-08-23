@@ -7,3 +7,5 @@
 **/data/
 *.db
 *.sqlite*
+vault.pass
+.vault.pass
