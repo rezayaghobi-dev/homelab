@@ -1,0 +1,33 @@
+# Copy the keys below into the REAL vault.yaml with real values, then encrypt:
+#   ansible-vault encrypt inventory/group_vars/all/vault.yaml --vault-password-file .vault.pass
+# To edit it later without re-encrypting by hand:
+#   ansible-vault edit inventory/group_vars/all/vault.yaml --vault-password-file .vault.pass
+#
+# This file itself is a template only — commit it, never commit the real vault.yaml
+# in plaintext.
+
+# proxy.yaml
+vault_proxy_user: changeme
+vault_proxy_pass: changeme
+vault_proxy_host: 0.0.0.0
+vault_proxy_port: 8080
+
+# docker.yaml
+vault_docker_proxy: http://0.0.0.0:8080
+vault_registry_mirror: https://your-registry-mirror.example.com
+vault_registry_mirror_host: your-registry-mirror.example.com
+
+# preparing.yaml (iptables trusted allowlist)
+vault_trusted_ips:
+  - 203.0.113.10
+vault_trusted_ranges:
+  - 203.0.113.0/24
+
+# repo-server.yaml
+vault_domain_name: example.com
+vault_web_auth_user: changeme
+vault_acme_email: you@example.com
+vault_repo_email: you@example.com
+
+# inventory/host.yaml
+vault_ssh_key_path: ~/.ssh/id_rsa

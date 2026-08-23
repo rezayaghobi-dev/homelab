@@ -1,10 +1,10 @@
-# http proxy
-http_proxy: http://37.59.93.12:8520
+# http proxy and registry mirror come from vault.yaml (see vault.yaml.example)
+http_proxy: "{{ vault_docker_proxy }}"
 
 # docker variables
 docker:
   http_proxy: "{{ http_proxy }}"
-  no_proxy: localhost,127.0.0.1,hub.hamdocker.ir
+  no_proxy: "localhost,127.0.0.1,{{ vault_registry_mirror_host }}"
   log_max_file: "5"
   log_max_size: 100m
-  registry_mirror: https://hub.hamdocker.ir
+  registry_mirror: "{{ vault_registry_mirror }}"

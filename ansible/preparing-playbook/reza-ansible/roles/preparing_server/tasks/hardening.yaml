@@ -13,10 +13,10 @@
     enabled: no
   ignore_errors: yes
 
-- name: Make timout configuration file.
+- name: Make timeout configuration file.
   template:
-    src: timout.j2
-    dest: /etc/profile.d/timout-settings.sh
+    src: timeout.j2
+    dest: /etc/profile.d/timeout-settings.sh
 
 - name: Set timezone to Asia/Tehran
   community.general.timezone:
@@ -50,6 +50,6 @@
 
 - name: Make fail2ban configuration file.
   template:
-    src: fial2ban.j2
+    src: fail2ban.j2
     dest: /etc/fail2ban/jail.local
   notify: Restart fail2ban

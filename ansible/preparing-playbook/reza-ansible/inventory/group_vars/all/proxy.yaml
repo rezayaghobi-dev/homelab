@@ -1,4 +1,5 @@
 # setup http proxy configuration
+# credentials/host come from vault.yaml (see vault.yaml.example) — never hardcode here
 proxy_env:
-  http_proxy: http://salam:salam@130.185.121.18:6789
+  http_proxy: "http://{{ vault_proxy_user }}:{{ vault_proxy_pass }}@{{ vault_proxy_host }}:{{ vault_proxy_port }}"
   https_proxy: "{{ http_proxy }}"

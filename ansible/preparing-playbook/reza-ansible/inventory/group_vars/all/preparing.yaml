@@ -45,10 +45,9 @@ iptables:
     - 80
     - 443
   #udp_port_access:
-  trusted_IP:
-    - 87.247.187.145
-  trusted_Range:
-    - 10.60.10.0/24
+  # trusted IPs/ranges come from vault.yaml (see vault.yaml.example)
+  trusted_IP: "{{ vault_trusted_ips }}"
+  trusted_Range: "{{ vault_trusted_ranges }}"
 
 # fail2ban configuration
 fail2ban:
