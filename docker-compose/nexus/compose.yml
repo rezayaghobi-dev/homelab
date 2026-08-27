@@ -1,0 +1,64 @@
+networks:
+  web_net:
+    name: web_net
+    external: true
+  app_net:
+    name: app_net
+    external: true
+
+volumes:
+  nexus_data:
+    name: nexus_data
+    external: false
+
+services:
+  nexus:
+    image: sonatype/nexus3:${nexus_image_tag}
+    container_name: nexus
+    hostname: nexus
+    restart: ${restart_policy}
+    mem_limit: ${nexus_mem_limit}
+    mem_reservation: ${nexus_mem_reservation}
+    environment:
+      NEXUS_SECURITY_INITIAL_PASSWORD: ${nexus_admin_pass}
+      INSTALL4J_ADD_VM_PARAMS: >-
+        -Xms${nexus_heap} -Xmx${nexus_heap}
+        -XX:MaxDirectMemorySize=${nexus_direct_mem}
+        -XX:+UseG1GC
+        -XX:+UseContainerSupport
+        -Djava.util.prefs.userRoot=/nexus-data/javaprefs
+    volumes:
+      - nexus_data:/nexus-data
+    networks:
+      - web_net
+      - app_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/service/rest/v1/status"]
+      interval: 30s
+      retries: 3
+      timeout: 10s
+      start_period: 90s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+
+      # --- Web UI / REST API - self-signed, no ACME (internal-only domain) ---
+      - "traefik.http.routers.http-repo.rule=Host(`${nexus_main_domain}`)"
+      - "traefik.http.routers.http-repo.entrypoints=web"
+      - "traefik.http.routers.http-repo.service=repo"
+      - "traefik.http.routers.repo.rule=Host(`${nexus_main_domain}`)"
+      - "traefik.http.routers.repo.entrypoints=websecure"
+      - "traefik.http.routers.repo.tls=true"
+      - "traefik.http.routers.repo.service=repo"
+      - "traefik.http.services.repo.loadBalancer.server.port=8081"
+
+      # --- Docker registry group repo (Docker Hub pull-through cache) ---
+      # Port created INSIDE Nexus after first boot - see SETUP.md.
+      - "traefik.http.routers.http-docker-repo.rule=Host(`${nexus_docker_domain}`)"
+      - "traefik.http.routers.http-docker-repo.entrypoints=web"
+      - "traefik.http.routers.http-docker-repo.service=docker-repo"
+      - "traefik.http.routers.docker-repo.rule=Host(`${nexus_docker_domain}`)"
+      - "traefik.http.routers.docker-repo.entrypoints=websecure"
+      - "traefik.http.routers.docker-repo.tls=true"
+      - "traefik.http.routers.docker-repo.service=docker-repo"
+      - "traefik.http.services.docker-repo.loadBalancer.server.port=${nexus_docker_connector_port}"

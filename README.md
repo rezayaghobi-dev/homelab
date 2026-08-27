@@ -13,6 +13,8 @@ A self-hosted homelab running on Docker Compose, built and maintained on an Ubun
 ![K3s](https://img.shields.io/badge/K3s-FFC61C?style=flat&logo=k3s&logoColor=white)
 ![Vagrant](https://img.shields.io/badge/Vagrant-1868F2?style=flat&logo=vagrant&logoColor=white)
 ![GitLab](https://img.shields.io/badge/GitLab-FC6D26?style=flat&logo=gitlab&logoColor=white)
+![Traefik](https://img.shields.io/badge/Traefik-36CFD1?style=flat&logo=traefik&logoColor=white)
+![Nexus](https://img.shields.io/badge/Nexus-BC1E2D?style=flat&logo=sonatype&logoColor=white)
 
 ## Overview
 
@@ -36,6 +38,7 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **OpenHands** | `docker-compose/openhands/` | Self-hosted AI coding agent (OpenHands/agent-canvas) backed by Ollama — see [AI Coding Agent](docs/AI-Agent.md) |
 | **Traefik** | `docker-compose/traefik/` | Reverse proxy with Docker daemon auto-discovery and full config-as-code — replaces Nginx Proxy Manager — see [Traefik](docs/Traefik.md) |
 | **Vaultwarden** | `docker-compose/vaultwarden/` | Self-hosted Bitwarden-compatible password manager — see [Vaultwarden](docs/Vaultwarden.md) |
+| **Nexus** | `docker-compose/nexus/` | Sonatype Nexus3 — Docker registry pull-through cache and artifact repository, fronted by Traefik — see [Nexus](docs/Nexus.md) |
 | **Semaphore** | `docker-compose/semaphore/` | Self-hosted Ansible UI (alternative to AWX) — see [Semaphore Guide](docs/Semaphore.md) |
 | **Ansible playbooks** | `ansible/update-playbooks/` | Shared update role (pull → recreate → health-check → prune) reused across every stack, run via Semaphore — see [Ansible Playbooks](docs/AnsiblePlaybooks.md) |
 | **Server provisioning** | `ansible/preparing-playbook/` | Full server preparation playbook (packages, hardening, Docker, Nexus/Traefik) tested against Vagrant first — see [Ansible README](ansible/README.md) |
@@ -118,6 +121,9 @@ homelab/
 │   ├── vaultwarden/
 │   │   ├── docker-compose.yml
 │   │   └── vw-data/
+│   ├── nexus/
+│   │   ├── compose.yml
+│   │   └── .env.example
 │   ├── nginx-proxy-manager/
 │   │   └── compose.yaml
 │   ├── semaphore/

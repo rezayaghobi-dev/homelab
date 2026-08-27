@@ -16,6 +16,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 - [Reverse Proxy](Reverse-Proxy.md) (historical — Nginx Proxy Manager)
 - [Traefik](Traefik.md) (current reverse proxy)
 - [Vaultwarden](Vaultwarden.md) (password manager)
+- [Nexus](Nexus.md) (Docker registry & artifact repository)
 - [Semaphore](Semaphore.md)
 - [DockScope](DockScope.md)
 - [Ansible Playbooks](AnsiblePlaybooks.md)
@@ -36,6 +37,8 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 | **Automation**     | n8n + **Semaphore** (Ansible Web UI) + **Ansible** (update playbooks) || **Media** | Plex + Sonarr/Radarr/Prowlarr + qBittorrent |
 | **Disk health** | Hard Disk Sentinel |
 | **AI Agent** | OpenHands + Ollama |
+| **Registry** | **Nexus3** (Docker Hub pull-through cache + artifact repo) |
+| **Passwords** | **Vaultwarden** (Bitwarden-compatible, 30+ char passwords) |
 | **CI/CD** | Self-hosted **GitLab** (Omnibus) + Docker-executor **Runner** |
 | **Orchestration (K8s)** | Single-node **K3s** cluster, monitored via the same Prometheus/Grafana/Loki stack |
 
