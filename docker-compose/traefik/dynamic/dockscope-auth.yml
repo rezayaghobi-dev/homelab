@@ -1,0 +1,7 @@
+http:
+  middlewares:
+    dockscope-auth:
+      basicAuth:
+        users:
+          # Generate with: htpasswd -nB <username>
+          - "${DOCKSCOPE_AUTH_USER}:${DOCKSCOPE_AUTH_HASH}"

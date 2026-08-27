@@ -15,10 +15,27 @@ services:
       - /mnt/storage/films/downloads:/downloads
       - /mnt/storage/adult:/data/whisparr
       - /mnt/storage/films/downloads/whisparr:/downloads/whisparr  # ADD THIS
-
     networks:
       - mediastack
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      # HTTPS
+      - "traefik.http.routers.whisparr.rule=Host(`whisparr.home.server`)"
+      - "traefik.http.routers.whisparr.entrypoints=websecure"
+      - "traefik.http.routers.whisparr.tls=true"
+      - "traefik.http.routers.whisparr.service=whisparr"
+      - "traefik.http.routers.whisparr.middlewares=security-headers@file"
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.whisparr-http.rule=Host(`whisparr.home.server`)"
+      - "traefik.http.routers.whisparr-http.entrypoints=web"
+      - "traefik.http.routers.whisparr-http.middlewares=redirect-to-https@file"
+      # Internal port (whisparr listens on 6969 inside the container)
+      - "traefik.http.services.whisparr.loadbalancer.server.port=6969"
 
 networks:
   mediastack:
+    external: true
+  web_net:
     external: true

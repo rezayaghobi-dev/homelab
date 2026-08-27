@@ -2,18 +2,41 @@ services:
   filebrowser:
     image: filebrowser/filebrowser:latest
     container_name: filebrowser
-    ports:
-      - "8085:80"
+    restart: unless-stopped
     user: "1000:1000"
+    ports:
+      - "8085:80"                    # keep for now (fallback)
     volumes:
       - /srv/samba/games:/games
       - /mnt/storage:/storage
       - /home/rezayaghobi/docker/filebrowser/config:/config
       - filebrowser_db:/database
       - filebrowser_srv:/srv
-    restart: unless-stopped
+    networks:
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+
+      # HTTPS
+      - "traefik.http.routers.filebrowser.rule=Host(`filebrowser.home.server`)"
+      - "traefik.http.routers.filebrowser.entrypoints=websecure"
+      - "traefik.http.routers.filebrowser.tls=true"
+      - "traefik.http.routers.filebrowser.service=filebrowser"
+      - "traefik.http.routers.filebrowser.middlewares=security-headers@file"
+
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.filebrowser-http.rule=Host(`filebrowser.home.server`)"
+      - "traefik.http.routers.filebrowser-http.entrypoints=web"
+      - "traefik.http.routers.filebrowser-http.middlewares=redirect-to-https@file"
+
+      # Internal port (Filebrowser listens on 80 inside the container)
+      - "traefik.http.services.filebrowser.loadbalancer.server.port=80"
 
 volumes:
   filebrowser_db:
   filebrowser_srv:
 
+networks:
+  web_net:
+    external: true

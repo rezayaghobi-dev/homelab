@@ -3,11 +3,10 @@ services:
     container_name: pihole
     image: ghcr.io/pi-hole/pihole:latest
     network_mode: host
-    env_file:
-      - .env
     environment:
       TZ: "Asia/Tehran"
       WEBPASSWORD: ${PIHOLE_WEBPASSWORD}
+      FTLCONF_webserver_port: '8082o,[::]:8082o'
     volumes:
       - ./etc-pihole:/etc/pihole
       - ./etc-dnsmasq.d:/etc/dnsmasq.d

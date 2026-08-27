@@ -1,9 +1,48 @@
+# ELK + Fleet — sized for: Phenom II X4, 8GB DDR3, 120GB SSD
+#
+# Scope right now = what the course has actually covered: Elasticsearch,
+# Logstash, Kibana, Fleet Server. Filebeat/auditbeat/metricbeat/packetbeat/
+# apm-server are deliberately NOT in here yet — add them as their own
+# service blocks (same pattern as elasticsearch/kibana below) when you
+# reach that lesson, so you're not paying RAM for services you can't use
+# yet.
+#
+# Services are grouped with Compose "profiles" so you can turn whole
+# lesson-chunks on/off without editing this file — just edit
+# COMPOSE_PROFILES in .env. Core (elasticsearch + kibana) has no profile,
+# so it's always included.
+#
+# Rough memory budget on this box (no swap):
+#   elasticsearch   ~1.5 GB
+#   logstash        ~0.9 GB
+#   kibana          ~0.9 GB
+#   fleet-server    ~0.4 GB
+#   ---------------------------------
+#   total           ~3.7 GB   (you have ~5.9 GB free right now)
+#
+# That leaves headroom for Docker/Traefik/host overhead and for the first
+# enrolled Elastic Agent once you get there (~0.25-0.3 GB more).
+#
+# REGISTRY: docker.elastic.co sits behind Amazon CloudFront, which
+# geo-blocks a handful of sanctioned countries (confirmed pattern for
+# Russia/Belarus, same CloudFront-based mechanism affects Iran) — that's
+# what "context deadline exceeded" against docker.elastic.co/v2/ almost
+# always means, not a real network fault. These images pull instead from
+# Docker Hub (elasticsearch, kibana, logstash under the official
+# library/ namespace, elastic-agent under elastic/) — Elastic pushes the
+# exact same images there and keeps them current (checked: 8.19.19
+# present on all four as of this writing). Different CDN, so it isn't
+# guaranteed to be reachable either — test with
+# `docker pull elasticsearch:${ELK_VERSION}` before assuming it works.
+
 services:
   elasticsearch:
-    image: elasticsearch:8.19.19
+    image: elasticsearch:${ELK_VERSION}
     container_name: elasticsearch
+    restart: unless-stopped
     environment:
       - node.name=elasticsearch
+      - cluster.name=elk-lab
       - discovery.type=single-node
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - xpack.security.enabled=true
@@ -13,19 +52,37 @@ services:
       - ES_JAVA_OPTS=-Xms1g -Xmx1g
     mem_limit: 1500m
     cpus: 1.5
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     volumes:
       - es-data:/usr/share/elasticsearch/data
     ports:
-      - "9200:9200"
-    restart: unless-stopped
+      - "9200:9200"                    # keep for now, drop once you trust Traefik routing
+    networks:
+      - elk
+      - web_net
     healthcheck:
       test: ["CMD-SHELL", "curl -s -u elastic:${ELASTIC_PASSWORD} http://localhost:9200 | grep -q cluster_name"]
       interval: 10s
       timeout: 10s
       retries: 30
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      - "traefik.http.routers.elasticsearch.rule=Host(`elasticsearch.home.server`)"
+      - "traefik.http.routers.elasticsearch.entrypoints=websecure"
+      - "traefik.http.routers.elasticsearch.tls=true"
+      - "traefik.http.routers.elasticsearch.service=elasticsearch"
+      - "traefik.http.routers.elasticsearch.middlewares=security-headers@file"
+      - "traefik.http.routers.elasticsearch-http.rule=Host(`elasticsearch.home.server`)"
+      - "traefik.http.routers.elasticsearch-http.entrypoints=web"
+      - "traefik.http.routers.elasticsearch-http.middlewares=redirect-to-https@file"
+      - "traefik.http.services.elasticsearch.loadbalancer.server.port=9200"
 
   kibana-setup:
-    image: elasticsearch:8.19.19
+    image: elasticsearch:${ELK_VERSION}
     container_name: kibana-setup
     depends_on:
       elasticsearch:
@@ -43,13 +100,16 @@ services:
       - "Content-Type: application/json"
       - "-d"
       - "{\"password\":\"${KIBANA_PASSWORD}\"}"
+    networks:
+      - elk
 
   kibana:
-    image: kibana:8.19.19
+    image: kibana:${ELK_VERSION}
     container_name: kibana
     depends_on:
       kibana-setup:
         condition: service_completed_successfully
+    restart: unless-stopped
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
       - ELASTICSEARCH_USERNAME=kibana_system
@@ -57,12 +117,125 @@ services:
       - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
       - XPACK_SECURITY_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
       - XPACK_REPORTING_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY}
-      - NODE_OPTIONS=--max-old-space-size=1024
-    mem_limit: 1200m
+      - XPACK_FLEET_ENABLED=true
+      - SERVER_PUBLICBASEURL=https://kibana.home.server
+      - NODE_OPTIONS=--max-old-space-size=896
+    mem_limit: 900m
     cpus: 1
     ports:
-      - "5601:5601"
+      - "5601:5601"                    # keep for now
+    networks:
+      - elk
+      - web_net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/api/status | grep -q '\"level\":\"available\"'"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      - "traefik.http.routers.kibana.rule=Host(`kibana.home.server`)"
+      - "traefik.http.routers.kibana.entrypoints=websecure"
+      - "traefik.http.routers.kibana.tls=true"
+      - "traefik.http.routers.kibana.service=kibana"
+      - "traefik.http.routers.kibana.middlewares=security-headers@file"
+      - "traefik.http.routers.kibana-http.rule=Host(`kibana.home.server`)"
+      - "traefik.http.routers.kibana-http.entrypoints=web"
+      - "traefik.http.routers.kibana-http.middlewares=redirect-to-https@file"
+      - "traefik.http.services.kibana.loadbalancer.server.port=5601"
+
+  logstash:
+    image: logstash:${ELK_VERSION}
+    container_name: logstash
+    profiles: ["logstash"]
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
     restart: unless-stopped
+    environment:
+      - LS_JAVA_OPTS=-Xms512m -Xmx512m
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+    mem_limit: 900m
+    cpus: 1
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+    ports:
+      - "5044:5044"                    # beats input
+      - "9600:9600"                    # monitoring API
+    networks:
+      - elk
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9600 | grep -q ok"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  fleet-server:
+    image: elastic/elastic-agent:${ELK_VERSION}
+    container_name: fleet-server
+    profiles: ["fleet"]
+    depends_on:
+      kibana:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      # No service token here on purpose — the agent bootstraps Fleet
+      # Server itself (creates the policy, mints its own token) as long
+      # as it can log into Kibana with real credentials. Without these
+      # two it silently falls back to elastic/changeme and fails auth.
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+      - FLEET_SERVER_ENABLE=true
+      - FLEET_SERVER_ELASTICSEARCH_HOST=http://elasticsearch:9200
+      - FLEET_SERVER_INSECURE_HTTP=true
+      - FLEET_SERVER_HOST=0.0.0.0
+      - FLEET_SERVER_PORT=8220
+      - KIBANA_HOST=http://kibana:5601
+      - KIBANA_FLEET_HOST=http://kibana:5601
+    mem_limit: 400m
+    cpus: 0.5
+    volumes:
+      - fleet-server-state:/usr/share/elastic-agent/state
+    ports:
+      - "8220:8220"
+    networks:
+      - elk
+      - web_net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8220/api/status | grep -q HEALTHY"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      - "traefik.http.routers.fleet.rule=Host(`fleet.home.server`)"
+      - "traefik.http.routers.fleet.entrypoints=websecure"
+      - "traefik.http.routers.fleet.tls=true"
+      - "traefik.http.routers.fleet.service=fleet"
+      - "traefik.http.routers.fleet.middlewares=security-headers@file"
+      - "traefik.http.routers.fleet-http.rule=Host(`fleet.home.server`)"
+      - "traefik.http.routers.fleet-http.entrypoints=web"
+      - "traefik.http.routers.fleet-http.middlewares=redirect-to-https@file"
+      - "traefik.http.services.fleet.loadbalancer.server.port=8220"
+
+  # --- Next lesson, not started yet ---
+  # Once you reach filebeat.yml / auditbeat.yml etc, add each beat here as
+  # its own service (profiles: ["beats"]), same pattern as logstash above:
+  # mount its .yml under ./<beat-name>/, point ELASTICSEARCH_HOSTNAME etc
+  # at elasticsearch/kibana over the `elk` network, and give it a named
+  # volume for its data dir. No Traefik labels needed for beats — they're
+  # agents, not web UIs.
 
 volumes:
   es-data:
+  fleet-server-state:
+
+networks:
+  elk:
+    driver: bridge
+  web_net:
+    external: true

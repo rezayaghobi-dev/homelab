@@ -1,0 +1,24 @@
+http:
+  routers:
+    sentinel:
+      rule: "Host(`sentinel.home.server`)"
+      entryPoints:
+        - websecure
+      tls: true
+      service: sentinel
+      middlewares:
+        - security-headers@file
+
+    sentinel-http:
+      rule: "Host(`sentinel.home.server`)"
+      entryPoints:
+        - web
+      service: sentinel
+      middlewares:
+        - redirect-to-https@file
+
+  services:
+    sentinel:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.100.6:8088"

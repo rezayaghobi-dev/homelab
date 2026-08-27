@@ -1,18 +1,28 @@
 services:
-  semaphore:
-    image: semaphoreui/semaphore:latest
-    container_name: semaphore
-    ports:
-      - "3001:3000"
-    environment:
-      SEMAPHORE_DB_DIALECT: sqlite
-      SEMAPHORE_DB_PATH: /var/lib/semaphore/database.db
-      SEMAPHORE_ADMIN: admin
-      SEMAPHORE_ADMIN_PASSWORD: rezayaghobi1386
-      SEMAPHORE_ADMIN_EMAIL: rezay5639@gmail.com
-      SEMAPHORE_ADMIN_NAME: Admin
-      SEMAPHORE_SECRET_KEY: cc4b3a5a90d31b963bee48a9dee089472bef5e0461f934db7891fc68161d36f7
+  dockscope:
+    image: ghcr.io/manuelr-t/dockscope:latest
+    container_name: dockscope
     volumes:
-      - ./data:/var/lib/semaphore
-      - ./playbooks:/playbooks
+      - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
+    networks:
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      # HTTPS
+      - "traefik.http.routers.dockscope.rule=Host(`dockscope.home.server`)"
+      - "traefik.http.routers.dockscope.entrypoints=websecure"
+      - "traefik.http.routers.dockscope.tls=true"
+      - "traefik.http.routers.dockscope.service=dockscope"
+      - "traefik.http.routers.dockscope.middlewares=security-headers@file,dockscope-auth@file"
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.dockscope-http.rule=Host(`dockscope.home.server`)"
+      - "traefik.http.routers.dockscope-http.entrypoints=web"
+      - "traefik.http.routers.dockscope-http.middlewares=redirect-to-https@file"
+      # Internal port
+      - "traefik.http.services.dockscope.loadbalancer.server.port=4681"
+
+networks:
+  web_net:
+    external: true

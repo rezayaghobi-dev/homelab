@@ -5,9 +5,7 @@ services:
     restart: unless-stopped
     hostname: gitlab.local
     ports:
-      - "8929:80"
       - "2224:22"
-      
     volumes:
       - ./config:/etc/gitlab
       - ./logs:/var/log/gitlab
@@ -16,10 +14,14 @@ services:
     environment:
       GITLAB_OMNIBUS_CONFIG: |
         gitlab_rails['monitoring_whitelist'] = ['127.0.0.1', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']
-        external_url 'http://192.168.100.6:8929'
+        external_url 'https://gitlab.home.server'
 
         nginx['listen_port'] = 80
         nginx['listen_https'] = false
+        nginx['proxy_set_headers'] = {
+          "X-Forwarded-Proto" => "https",
+          "X-Forwarded-Ssl" => "on"
+        }
 
         gitlab_rails['gitlab_shell_ssh_port'] = 2224
 
@@ -38,14 +40,52 @@ services:
         postgres_exporter['enable'] = false
         gitlab_exporter['enable'] = false
 
-        # Registry off for now — flip to true later if you want it
-        registry['enable'] = false
+        # Registry
+        registry['enable'] = true
+        registry_external_url 'https://registry.home.server'
+        gitlab_rails['registry_enabled'] = true
+        gitlab_rails['registry_host'] = "registry.home.server"
+        gitlab_rails['registry_port'] = "443"
+        registry_nginx['listen_port'] = 5050
+        registry_nginx['listen_https'] = false
+    networks:
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+
+      # --- Web UI ---
+      - "traefik.http.routers.gitlab.rule=Host(`gitlab.home.server`)"
+      - "traefik.http.routers.gitlab.entrypoints=websecure"
+      - "traefik.http.routers.gitlab.tls=true"
+      - "traefik.http.routers.gitlab.service=gitlab"
+      - "traefik.http.routers.gitlab.middlewares=security-headers@file"
+      - "traefik.http.routers.gitlab-http.rule=Host(`gitlab.home.server`)"
+      - "traefik.http.routers.gitlab-http.entrypoints=web"
+      - "traefik.http.routers.gitlab-http.service=gitlab"
+      - "traefik.http.routers.gitlab-http.middlewares=redirect-to-https@file"
+      - "traefik.http.services.gitlab.loadbalancer.server.port=80"
+
+      # --- Container Registry ---
+      - "traefik.http.routers.registry.rule=Host(`registry.home.server`)"
+      - "traefik.http.routers.registry.entrypoints=websecure"
+      - "traefik.http.routers.registry.tls=true"
+      - "traefik.http.routers.registry.service=registry"
+      - "traefik.http.routers.registry.middlewares=security-headers@file"
+      - "traefik.http.routers.registry-http.rule=Host(`registry.home.server`)"
+      - "traefik.http.routers.registry-http.entrypoints=web"
+      - "traefik.http.routers.registry-http.service=registry"
+      - "traefik.http.routers.registry-http.middlewares=redirect-to-https@file"
+      - "traefik.http.services.registry.loadbalancer.server.port=5050"
+
   gitlab-runner:
     image: gitlab/gitlab-runner:latest
     container_name: gitlab-runner
     restart: unless-stopped
-    ports:
-      - "9252:9252"
     volumes:
       - ./runner-config:/etc/gitlab-runner
       - /var/run/docker.sock:/var/run/docker.sock
+
+networks:
+  web_net:
+    external: true

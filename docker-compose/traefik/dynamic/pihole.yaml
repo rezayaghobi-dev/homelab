@@ -1,0 +1,24 @@
+http:
+  routers:
+    pihole:
+      rule: "Host(`pihole.home.server`)"
+      entryPoints:
+        - websecure
+      tls: {}
+      service: pihole
+      middlewares:
+        - security-headers@file
+
+    pihole-http:
+      rule: "Host(`pihole.home.server`)"
+      entryPoints:
+        - web
+      service: pihole          # ← added (required)
+      middlewares:
+        - redirect-to-https@file
+
+  services:
+    pihole:
+      loadBalancer:
+        servers:
+          - url: "http://172.17.0.1:8082"

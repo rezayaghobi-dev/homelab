@@ -13,7 +13,28 @@ services:
       - ./config:/config
     networks:
       - mediastack
+      - web_net 
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+
+      # HTTPS
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.home.server`)"
+      - "traefik.http.routers.prowlarr.entrypoints=websecure"
+      - "traefik.http.routers.prowlarr.tls=true"
+      - "traefik.http.routers.prowlarr.service=prowlarr"
+      - "traefik.http.routers.prowlarr.middlewares=security-headers@file"
+
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.prowlarr-http.rule=Host(`prowlarr.home.server`)"
+      - "traefik.http.routers.prowlarr-http.entrypoints=web"
+      - "traefik.http.routers.prowlarr-http.middlewares=redirect-to-https@file"
+
+      # Internal port (prowlarr listens on 9696 inside the container)
+      - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
 
 networks:
   mediastack:
+    external: true
+  web_net:
     external: true

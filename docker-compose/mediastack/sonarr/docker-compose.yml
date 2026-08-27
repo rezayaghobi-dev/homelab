@@ -16,7 +16,29 @@ services:
     restart: unless-stopped
     networks:
       - mediastack
+      - web_net
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+
+      # HTTPS
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.home.server`)"
+      - "traefik.http.routers.sonarr.entrypoints=websecure"
+      - "traefik.http.routers.sonarr.tls=true"
+      - "traefik.http.routers.sonarr.service=sonarr"
+      - "traefik.http.routers.sonarr.middlewares=security-headers@file"
+
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.sonarr-http.rule=Host(`sonarr.home.server`)"
+      - "traefik.http.routers.sonarr-http.entrypoints=web"
+      - "traefik.http.routers.sonarr-http.middlewares=redirect-to-https@file"
+
+      # Internal port (Filebrowser listens on 8989 inside the container)
+      - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
 
 networks:
   mediastack:
+    external: true
+  web_net:
     external: true

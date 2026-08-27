@@ -10,14 +10,19 @@ services:
       - ./projects:/home/openhands/workspace/project
     stdin_open: true
     tty: true
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
+    depends_on:
+      - github-mcp
+
+  github-mcp:
+    image: ghcr.io/github/github-mcp-server:latest
+    container_name: github-mcp
     restart: unless-stopped
     ports:
-      - "11434:11434"
-    volumes:
-      - ollama-data:/root/.ollama
+      - "8083:8083"
+    stdin_open: true
+    tty: true
+    environment:
+      - GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN}
+
 volumes:
   openhands-data:
-  ollama-data:

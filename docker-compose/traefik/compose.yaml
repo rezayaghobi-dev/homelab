@@ -1,0 +1,56 @@
+services:
+  traefik:
+    image: traefik:v3.7
+    container_name: traefik
+    restart: unless-stopped
+
+    command:
+      - --log.level=INFO
+
+      # API / dashboard
+      - --api.dashboard=true
+      - --api.insecure=false
+
+      # Docker provider
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=web_net
+      - --providers.file.directory=/dynamic
+      - --providers.file.watch=true
+
+      # Entrypoints
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+
+      # Health check
+      - --ping=true
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dynamic:/dynamic:ro
+      - ./certs:/certs:ro
+    networks:
+      - web_net
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+
+      # Dashboard HTTPS
+      - "traefik.http.routers.traefik.rule=Host(`traefik.home.server`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=security-headers@file"
+
+      # Dashboard HTTP → HTTPS redirect
+      - "traefik.http.routers.traefik-http.rule=Host(`traefik.home.server`)"
+      - "traefik.http.routers.traefik-http.entrypoints=web"
+      - "traefik.http.routers.traefik-http.middlewares=redirect-to-https@file"
+networks:
+  web_net:
+    external: true

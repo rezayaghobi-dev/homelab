@@ -8,10 +8,32 @@ services:
       SEMAPHORE_DB_DIALECT: sqlite
       SEMAPHORE_DB_PATH: /var/lib/semaphore/database.db
       SEMAPHORE_ADMIN: admin
-      SEMAPHORE_ADMIN_PASSWORD: choose a passwor or use .env (better )
-      SEMAPHORE_ADMIN_EMAIL: rezay5639@gmail.com
+      SEMAPHORE_ADMIN_PASSWORD: ${SEMAPHORE_ADMIN_PASSWORD}
+      SEMAPHORE_ADMIN_EMAIL: ${SEMAPHORE_ADMIN_EMAIL}
       SEMAPHORE_ADMIN_NAME: Admin
-      SEMAPHORE_SECRET_KEY: <your-long-secret-key> 
+      SEMAPHORE_SECRET_KEY: ${SEMAPHORE_SECRET_KEY}
     volumes:
       - ./data:/var/lib/semaphore
+      - ./playbooks:/playbooks
+    networks:
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      # HTTPS
+      - "traefik.http.routers.semaphore.rule=Host(`semaphore.home.server`)"
+      - "traefik.http.routers.semaphore.entrypoints=websecure"
+      - "traefik.http.routers.semaphore.tls=true"
+      - "traefik.http.routers.semaphore.service=semaphore"
+      - "traefik.http.routers.semaphore.middlewares=security-headers@file"
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.semaphore-http.rule=Host(`semaphore.home.server`)"
+      - "traefik.http.routers.semaphore-http.entrypoints=web"
+      - "traefik.http.routers.semaphore-http.middlewares=redirect-to-https@file"
+      # Internal port (semaphore listens on 3000 inside the container)
+      - "traefik.http.services.semaphore.loadbalancer.server.port=3000"
     restart: unless-stopped
+
+networks:
+  web_net:
+    external: true

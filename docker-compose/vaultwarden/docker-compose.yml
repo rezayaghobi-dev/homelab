@@ -1,0 +1,33 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      - WEBSOCKET_ENABLED=true
+      - SIGNUPS_ALLOWED=false   # set false after creating your account
+    volumes:
+      - ./vw-data:/data
+    ports:
+      - "8084:80"
+    networks:
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      # HTTPS
+      - "traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.home.server`)"
+      - "traefik.http.routers.vaultwarden.entrypoints=websecure"
+      - "traefik.http.routers.vaultwarden.tls=true"
+      - "traefik.http.routers.vaultwarden.service=vaultwarden"
+      - "traefik.http.routers.vaultwarden.middlewares=security-headers@file"
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.vaultwarden-http.rule=Host(`vaultwarden.home.server`)"
+      - "traefik.http.routers.vaultwarden-http.entrypoints=web"
+      - "traefik.http.routers.vaultwarden-http.middlewares=redirect-to-https@file"
+      # Internal port (vaultwarden listens on 80 inside the container)
+      - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
+
+networks:
+  web_net:
+    external: true

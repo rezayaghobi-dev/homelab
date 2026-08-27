@@ -36,23 +36,54 @@ services:
       DB_POSTGRESDB_USER: ${POSTGRES_USER}
       DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
 
+      NPM_ADMIN_EMAIL: ${NPM_ADMIN_EMAIL}
+      NPM_ADMIN_PASSWORD: ${NPM_ADMIN_PASSWORD}
+      PIHOLE_PASSWORD: ${PIHOLE_PASSWORD}
+
       N8N_BASIC_AUTH_ACTIVE: true
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: false
       N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
       N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
 
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
 
       N8N_SECURE_COOKIE: false
-      N8N_HOST: ${N8N_HOST}
+      N8N_HOST: n8n.home.server
+      N8N_PROTOCOL: https
       N8N_PORT: 5678
-      N8N_PROTOCOL: http
+      WEBHOOK_URL: https://n8n.home.server/
 
       TZ: ${TZ}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+
+      # HTTPS router
+      - "traefik.http.routers.n8n.rule=Host(`n8n.home.server`)"
+      - "traefik.http.routers.n8n.entrypoints=websecure"
+      - "traefik.http.routers.n8n.tls=true"
+      - "traefik.http.routers.n8n.service=n8n"
+      - "traefik.http.routers.n8n.middlewares=security-headers@file"
+
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.n8n-http.rule=Host(`n8n.home.server`)"
+      - "traefik.http.routers.n8n-http.entrypoints=web"
+      - "traefik.http.routers.n8n-http.middlewares=redirect-to-https@file"
+
+      # Internal container port
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
 
     ports:
       - "5678:5678"
+
+    networks:
+      - default          # keep the existing n8n_default (for postgres)
+      - web_net          # new
 
     volumes:
       - ./n8n-data:/home/node/.n8n
       - /mnt/storage:/mnt/storage
       - /mnt/windows-video:/mnt/windows-video
+networks:
+  web_net:
+    external: true

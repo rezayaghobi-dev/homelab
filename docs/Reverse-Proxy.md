@@ -1,6 +1,8 @@
-# Reverse Proxy
+# Reverse Proxy (historical — Nginx Proxy Manager)
 
-[Nginx Proxy Manager](https://nginxproxymanager.com/) sits in front of every service on the LAN, replacing `http://<ip>:<port>` with friendly `<service>.home` names and trusted local HTTPS. Runs as its own Compose stack under `nginx-proxy-manager/`.
+> **Note:** This homelab has migrated from Nginx Proxy Manager to **Traefik**. See [Traefik](Traefik.md) for the current reverse proxy setup and migration rationale. This page documents the original NPM setup as a reference.
+
+[Nginx Proxy Manager](https://nginxproxymanager.com/) sat in front of every service on the LAN, replacing `http://<ip>:<port>` with friendly `<service>.home` names and trusted local HTTPS. Ran as its own Compose stack under `nginx-proxy-manager/`.
 
 ![Sanctions/access error](images/openhands-error.png)
 

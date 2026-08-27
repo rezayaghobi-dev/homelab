@@ -6,7 +6,5 @@ services:
     volumes:
       - /dev:/dev
       - /run/udev:/run/udev:ro
-    ports:
-      - "8090:8090"
+      - ./report:/etc/hdsentinel
     restart: unless-stopped
-

@@ -34,7 +34,8 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **Sentinel** | `docker-compose/sentinel/` | Disk health monitoring integrated with smartctl, dumps output to container logs |
 | **smartctl** | `docker-compose/smartctl/` | Disk health monitoring (S.M.A.R.T. data) |
 | **OpenHands** | `docker-compose/openhands/` | Self-hosted AI coding agent (OpenHands/agent-canvas) backed by Ollama — see [AI Coding Agent](docs/AI-Agent.md) |
-| **Nginx Proxy Manager** | `docker-compose/nginx-proxy-manager/` | Reverse proxy giving every service a friendly `.home` hostname with locally-trusted HTTPS — see [Reverse Proxy](docs/Reverse-Proxy.md) |
+| **Traefik** | `docker-compose/traefik/` | Reverse proxy with Docker daemon auto-discovery and full config-as-code — replaces Nginx Proxy Manager — see [Traefik](docs/Traefik.md) |
+| **Vaultwarden** | `docker-compose/vaultwarden/` | Self-hosted Bitwarden-compatible password manager — see [Vaultwarden](docs/Vaultwarden.md) |
 | **Semaphore** | `docker-compose/semaphore/` | Self-hosted Ansible UI (alternative to AWX) — see [Semaphore Guide](docs/Semaphore.md) |
 | **Ansible playbooks** | `ansible/update-playbooks/` | Shared update role (pull → recreate → health-check → prune) reused across every stack, run via Semaphore — see [Ansible Playbooks](docs/AnsiblePlaybooks.md) |
 | **Server provisioning** | `ansible/preparing-playbook/` | Full server preparation playbook (packages, hardening, Docker, Nexus/Traefik) tested against Vagrant first — see [Ansible README](ansible/README.md) |
@@ -50,6 +51,7 @@ Not everything in this repo runs permanently. Some folders are kept purely as re
 
 | Lab | Folder | Purpose |
 |---|---|---|
+| **Nginx Proxy Manager** | `docker-compose/nginx-proxy-manager/` | ~~Retired~~ — replaced by Traefik for config-as-code reverse proxying. See [Traefik](docs/Traefik.md) for the migration rationale and [Reverse Proxy](docs/Reverse-Proxy.md) for the original NPM setup |
 | **Elastic Stack (ELK)** | `docker-compose/ELK/` | Elasticsearch + Kibana, security-enabled, sized for this hardware — a modern-workflow (Elastic Agent/Fleet) alternative to an older Filebeat/Metricbeat-based course reference. Not run continuously since Loki now covers centralized logging here — see [Elastic Stack (ELK)](docs/ElasticStack.md) |
 | **Vagrant test VM** | `vagrant/` | Disposable Debian 12 VirtualBox VM (`bento/debian-12`) on a private-network IP, for testing provisioning scripts and configuration changes before touching the real host |
 
@@ -100,8 +102,24 @@ homelab/
 │   │   └── docker-compose.yml
 │   ├── openhands/
 │   │   └── docker-compose.yaml
+│   ├── traefik/
+│   │   ├── compose.yaml
+│   │   ├── README.md
+│   │   ├── certs/
+│   │   │   ├── home.server.crt
+│   │   │   └── home.server.key
+│   │   └── dynamic/
+│   │       ├── tls.yaml
+│   │       ├── middlewares.yaml
+│   │       ├── pihole.yaml
+│   │       ├── plex.yml
+│   │       ├── sentinel.yml
+│   │       └── dockscope-auth.yml
+│   ├── vaultwarden/
+│   │   ├── docker-compose.yml
+│   │   └── vw-data/
 │   ├── nginx-proxy-manager/
-│   │   └── docker-compose.yaml
+│   │   └── compose.yaml
 │   ├── semaphore/
 │   │   ├── docker-compose.yml
 │   │   └── README.md
@@ -216,9 +234,9 @@ Rather than pulling and recreating manually, every always-on stack has a matchin
 ## Security notes
 
 - All `.env` files, runtime config directories, and databases are excluded via `.gitignore` — only deployment definitions (`docker-compose.yml`) and `.env.example` placeholders are tracked.
-- Passwords referenced in compose files are injected via environment variables, never hardcoded.
+- Passwords referenced in compose files are injected via environment variables, never hardcoded. Long passwords (30+ chars) are generated and stored in Vaultwarden, referenced via `.env` files on the host.
 - The AI coding agent (`docker-compose/openhands/`) currently uses a third-party API aggregator as its LLM backend — see [AI Coding Agent](docs/AI-Agent.md) for details and caveats. It has no access to the Docker socket or other containers on the host.
-- **DockScope** (`docker-compose/dockscope/`) mounts `/var/run/docker.sock`, the same as Portainer — this grants it effectively root-equivalent access to the Docker host, and it currently has no built-in authentication on its web UI, so it's kept LAN-only and not exposed through the reverse proxy. See [DockScope](docs/DockScope.md).
+- **DockScope** (`docker-compose/dockscope/`) mounts `/var/run/docker.sock`, the same as Portainer — this grants it effectively root-equivalent access to the Docker host. It's protected by a Traefik basicAuth middleware and kept LAN-only. See [DockScope](docs/DockScope.md).
 - **Grafana Alloy** (part of the monitoring stack) also mounts `/var/run/docker.sock` read-only, needed to discover containers and tail their logs.
 
 ## Lessons learned
@@ -244,6 +262,7 @@ Rather than pulling and recreating manually, every always-on stack has a matchin
 - `kube-state-metrics`'s default ClusterRole doesn't cover every resource it tries to watch (`NetworkPolicy`, `MutatingWebhookConfiguration`, `ValidatingWebhookConfiguration`, and more) — surfaces as repeated `reflector.go` `Failed to list ... is forbidden` warnings rather than a single clear error. Fixed with a supplementary `ClusterRole`/`ClusterRoleBinding` granting just the missing `list`/`watch` verbs. See [K3s](docs/K3s.md).
 - A pod doesn't pick up a widened RBAC grant on its own — its informers already failed and cached that state. `kubectl rollout restart` is required after any `ClusterRole` change for an already-running pod to actually benefit from it.
 - Old log lines don't disappear from Grafana/Loki after a fix ships — they just age out of whatever time window the dashboard is querying. A dropping "Errors total" over a few minutes is the real signal that a fix worked, not an empty panel immediately after applying it.
+- Migrating from a UI-based reverse proxy (Nginx Proxy Manager) to a config-as-code one (Traefik) forced a cleanup of every hardcoded password in every compose file — the migration was the catalyst for adopting Vaultwarden and proper secret management across the stack. See [Traefik](docs/Traefik.md) and [Vaultwarden](docs/Vaultwarden.md).
 
 ## Roadmap
 

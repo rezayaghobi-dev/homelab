@@ -10,13 +10,30 @@ services:
       - ./config:/config
       - /mnt/storage/films:/media
       - /mnt/storage/films/downloads:/downloads
-
     ports:
       - 7878:7878
     restart: unless-stopped
     networks:
       - mediastack
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      # HTTPS
+      - "traefik.http.routers.radarr.rule=Host(`radarr.home.server`)"
+      - "traefik.http.routers.radarr.entrypoints=websecure"
+      - "traefik.http.routers.radarr.tls=true"
+      - "traefik.http.routers.radarr.service=radarr"
+      - "traefik.http.routers.radarr.middlewares=security-headers@file"
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.radarr-http.rule=Host(`radarr.home.server`)"
+      - "traefik.http.routers.radarr-http.entrypoints=web"
+      - "traefik.http.routers.radarr-http.middlewares=redirect-to-https@file"
+      # Internal port (radarr listens on 7878 inside the container)
+      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
 
 networks:
   mediastack:
+    external: true
+  web_net:
     external: true

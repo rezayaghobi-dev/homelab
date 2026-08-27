@@ -4,7 +4,7 @@ services:
     container_name: prometheus
     restart: unless-stopped
     ports:
-      - "9090:9090"
+      - "9090:9090"                    # keep for now
     volumes:
       - ./prometheus:/etc/prometheus:ro
       - ./data/prometheus:/prometheus
@@ -14,18 +14,44 @@ services:
       - "--web.enable-lifecycle"
     networks:
       - monitoring
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.home.server`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+      - "traefik.http.routers.prometheus.tls=true"
+      - "traefik.http.routers.prometheus.service=prometheus"
+      - "traefik.http.routers.prometheus.middlewares=security-headers@file"
+      - "traefik.http.routers.prometheus-http.rule=Host(`prometheus.home.server`)"
+      - "traefik.http.routers.prometheus-http.entrypoints=web"
+      - "traefik.http.routers.prometheus-http.middlewares=redirect-to-https@file"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
 
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3000:3000"                    # keep for now
     volumes:
       - ./grafana/data:/var/lib/grafana
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
     networks:
       - monitoring
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.home.server`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.routers.grafana.service=grafana"
+      - "traefik.http.routers.grafana.middlewares=security-headers@file"
+      - "traefik.http.routers.grafana-http.rule=Host(`grafana.home.server`)"
+      - "traefik.http.routers.grafana-http.entrypoints=web"
+      - "traefik.http.routers.grafana-http.middlewares=redirect-to-https@file"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
   node_exporter:
     image: prom/node-exporter:latest
@@ -39,13 +65,14 @@ services:
       - /:/rootfs:ro
     networks:
       - monitoring
+    # no Traefik labels – no web UI needed
 
   cadvisor:
     image: ghcr.io/google/cadvisor:latest
     container_name: cadvisor
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8080:8080"                    # keep for now
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
@@ -53,6 +80,19 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
     networks:
       - monitoring
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      - "traefik.http.routers.cadvisor.rule=Host(`cadvisor.home.server`)"
+      - "traefik.http.routers.cadvisor.entrypoints=websecure"
+      - "traefik.http.routers.cadvisor.tls=true"
+      - "traefik.http.routers.cadvisor.service=cadvisor"
+      - "traefik.http.routers.cadvisor.middlewares=security-headers@file"
+      - "traefik.http.routers.cadvisor-http.rule=Host(`cadvisor.home.server`)"
+      - "traefik.http.routers.cadvisor-http.entrypoints=web"
+      - "traefik.http.routers.cadvisor-http.middlewares=redirect-to-https@file"
+      - "traefik.http.services.cadvisor.loadbalancer.server.port=8080"
 
   loki:
     image: grafana/loki:3.7.3
@@ -62,12 +102,25 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ./loki/local-config.yaml:/etc/loki/local-config.yaml:ro    
+      - ./loki/local-config.yaml:/etc/loki/local-config.yaml:ro
       - ./data/loki:/loki
     mem_limit: 400m
     cpus: 1
     networks:
       - monitoring
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      - "traefik.http.routers.loki.rule=Host(`loki.home.server`)"
+      - "traefik.http.routers.loki.entrypoints=websecure"
+      - "traefik.http.routers.loki.tls=true"
+      - "traefik.http.routers.loki.service=loki"
+      - "traefik.http.routers.loki.middlewares=security-headers@file"
+      - "traefik.http.routers.loki-http.rule=Host(`loki.home.server`)"
+      - "traefik.http.routers.loki-http.entrypoints=web"
+      - "traefik.http.routers.loki-http.middlewares=redirect-to-https@file"
+      - "traefik.http.services.loki.loadbalancer.server.port=3100"
 
   alloy:
     image: grafana/alloy:v1.17.1
@@ -91,7 +144,22 @@ services:
       - loki
     networks:
       - monitoring
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      - "traefik.http.routers.alloy.rule=Host(`alloy.home.server`)"
+      - "traefik.http.routers.alloy.entrypoints=websecure"
+      - "traefik.http.routers.alloy.tls=true"
+      - "traefik.http.routers.alloy.service=alloy"
+      - "traefik.http.routers.alloy.middlewares=security-headers@file"
+      - "traefik.http.routers.alloy-http.rule=Host(`alloy.home.server`)"
+      - "traefik.http.routers.alloy-http.entrypoints=web"
+      - "traefik.http.routers.alloy-http.middlewares=redirect-to-https@file"
+      - "traefik.http.services.alloy.loadbalancer.server.port=12345"
 
 networks:
   monitoring:
     driver: bridge
+  web_net:
+    external: true

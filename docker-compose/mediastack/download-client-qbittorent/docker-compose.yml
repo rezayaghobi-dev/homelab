@@ -17,7 +17,25 @@ services:
       - /mnt/storage/films/downloads:/downloads
     networks:
       - mediastack
+      - web_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web_net"
+      # HTTPS
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.home.server`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+      - "traefik.http.routers.qbittorrent.tls=true"
+      - "traefik.http.routers.qbittorrent.service=qbittorrent"
+      - "traefik.http.routers.qbittorrent.middlewares=security-headers@file"
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.qbittorrent-http.rule=Host(`qbittorrent.home.server`)"
+      - "traefik.http.routers.qbittorrent-http.entrypoints=web"
+      - "traefik.http.routers.qbittorrent-http.middlewares=redirect-to-https@file"
+      # Internal port (qbittorrent WebUI listens on 8080 inside the container)
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
 
 networks:
   mediastack:
+    external: true
+  web_net:
     external: true

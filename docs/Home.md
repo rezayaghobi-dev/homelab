@@ -13,7 +13,9 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 - [Storage Health](Storage-Health.md)
 - [Lessons Learned](Lessons-Learned.md)
 - [AI Coding Agent](AI-Agent.md)
-- [Reverse Proxy](Reverse-Proxy.md)
+- [Reverse Proxy](Reverse-Proxy.md) (historical — Nginx Proxy Manager)
+- [Traefik](Traefik.md) (current reverse proxy)
+- [Vaultwarden](Vaultwarden.md) (password manager)
 - [Semaphore](Semaphore.md)
 - [DockScope](DockScope.md)
 - [Ansible Playbooks](AnsiblePlaybooks.md)
@@ -30,7 +32,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 | **Orchestration** | Docker Compose, one stack per service |
 | **Management** | Portainer, **DockScope** (3D visual dashboard) |
 | **Monitoring** | Prometheus + Grafana + cAdvisor + node-exporter + **Loki + Alloy** (centralized logs) |
-| **Network** | Pi-hole (DNS filtering), Samba (file sharing), nginx (proxy managing) |
+| **Network** | Pi-hole (DNS filtering), Samba (file sharing), **Traefik** (reverse proxy, config-as-code) |
 | **Automation**     | n8n + **Semaphore** (Ansible Web UI) + **Ansible** (update playbooks) || **Media** | Plex + Sonarr/Radarr/Prowlarr + qBittorrent |
 | **Disk health** | Hard Disk Sentinel |
 | **AI Agent** | OpenHands + Ollama |
