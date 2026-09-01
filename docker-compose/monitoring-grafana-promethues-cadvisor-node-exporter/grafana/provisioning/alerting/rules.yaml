@@ -1,0 +1,93 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: infra-alerts
+    folder: Infra
+    interval: 1m
+    rules:
+      - uid: node-down
+        title: Node exporter target down
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: efck3im1w4pvkf
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: up{job="node_exporter"}
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: lt
+                    params: [1]
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node exporter target is down"
+
+      - uid: high-cpu
+        title: High CPU usage
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: efck3im1w4pvkf
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: 100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+              instant: true
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [85]
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage above 85% on {{ $labels.instance }}"
+
+      - uid: loki-error-spike
+        title: Error log rate spike
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: P8E80F9AEF21F6940
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: 'sum(count_over_time({job=~".+"} |= "error" [5m])) or vector(0)'
+              instant: true
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [20]
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Error log rate is elevated"

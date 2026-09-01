@@ -6,6 +6,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 
 - [Architecture and Hardware](Architecture-and-Hardware.md)
 - [Monitoring Stack](Monitoring-Stack.md)
+- [Alerting](Alerting.md)
 - [K3s](K3s.md)
 - [Network Services](Network-Services.md)
 - [Media Automation](Media-Automation.md)
@@ -32,7 +33,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 | **Host** | Ubuntu Server |
 | **Orchestration** | Docker Compose, one stack per service |
 | **Management** | Portainer, **DockScope** (3D visual dashboard) |
-| **Monitoring** | Prometheus + Grafana + cAdvisor + node-exporter + **Loki + Alloy** (centralized logs) |
+| **Monitoring** | Prometheus + Grafana + cAdvisor + node-exporter + **Loki + Alloy** (centralized logs) + **Grafana Alerting** (provisioned rules + email notifications) |
 | **Network** | Pi-hole (DNS filtering), Samba (file sharing), **Traefik** (reverse proxy, config-as-code) |
 | **Automation**     | n8n + **Semaphore** (Ansible Web UI) + **Ansible** (update playbooks) || **Media** | Plex + Sonarr/Radarr/Prowlarr + qBittorrent |
 | **Disk health** | Hard Disk Sentinel |

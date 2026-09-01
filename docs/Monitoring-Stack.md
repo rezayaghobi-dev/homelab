@@ -11,6 +11,19 @@ Prometheus, Grafana, cAdvisor, and node-exporter running together give full visi
 - **Loki** — stores and indexes logs by label, not full text, keeping it lightweight
 - **Grafana Alloy** — discovers every running container and ships its logs to Loki
 - **kube-state-metrics** — exposes K3s object-level state (deployments, pod restarts, resource requests/limits) as Prometheus metrics
+- **Grafana Alerting** — unified alerting rules evaluated against Prometheus and Loki, with email notifications via Gmail SMTP
+
+## Alerting
+
+Grafana's unified alerting is fully provisioned as code — rules, contact points, and notification policies live in `grafana/provisioning/alerting/` and survive container rebuilds. Three rules cover the critical failure modes:
+
+| Rule | Source | What it catches | Severity |
+|---|---|---|---|
+| Node exporter target down | Prometheus | Host unreachable or exporter crashed | `critical` |
+| High CPU usage | Prometheus | Sustained CPU above 85% for 5 min | `warning` |
+| Error log rate spike | Loki | More than 20 error log lines in 5 min | `warning` |
+
+Alerts route to Gmail over SMTP, grouped by alert name and instance, with a 4-hour repeat interval for ongoing issues. Full details — how to add new rules, common PromQL examples, adding Slack or other channels — in [Alerting](Alerting.md).
 
 ## Prometheus targets
 
@@ -65,4 +78,4 @@ Logs follow the same pattern: Grafana Alloy's `discovery.kubernetes` + `loki.sou
 
 ## Why this matters
 
-On a lower-spec host, resource headroom is limited. Having per-container and host-level metrics from day one means a runaway container or a creeping memory leak shows up on a dashboard before it takes the box down — instead of finding out from an outage. Centralized logs close the other half of that gap: when a container *does* misbehave, its logs are searchable and correlated against the same timeline as its resource usage, rather than requiring a separate `docker logs` per container after the fact.
+On a lower-spec host, resource headroom is limited. Having per-container and host-level metrics from day one means a runaway container or a creeping memory leak shows up on a dashboard before it takes the box down — instead of finding out from an outage. Centralized logs close the other half of that gap: when a container *does* misbehave, its logs are searchable and correlated against the same timeline as its resource usage, rather than requiring a separate `docker logs` per container after the fact. Alerting completes the loop: instead of actively watching dashboards, you get an email when something actually needs attention — a host going down, CPU spiking, or error logs flooding.

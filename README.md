@@ -24,7 +24,7 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 
 | Service | Folder | Purpose |
 |---|---|---|
-| **Monitoring stack** | `docker-compose/monitoring-grafana-promethues-cadvisor-node-exporter/` | Prometheus for metrics, Grafana for dashboards, cAdvisor for per-container resource stats, node-exporter for host-level metrics, plus Loki + Grafana Alloy for centralized container log aggregation — see [Monitoring Stack](docs/Monitoring-Stack.md) |
+| **Monitoring stack** | `docker-compose/monitoring-grafana-promethues-cadvisor-node-exporter/` | Prometheus for metrics, Grafana for dashboards, cAdvisor for per-container resource stats, node-exporter for host-level metrics, Loki + Grafana Alloy for centralized logs, and unified alerting with email notifications — see [Monitoring Stack](docs/Monitoring-Stack.md) and [Alerting](docs/Alerting.md) |
 | **Pi-hole** | `docker-compose/pihole/` | Network-wide DNS-level ad and tracker blocking |
 | **Portainer** | `docker-compose/portainer/` | Web UI for managing and monitoring all Docker containers on the host |
 | **DockScope** | `docker-compose/dockscope/` | 3D visual dashboard mapping containers, networks, and dependencies, with anomaly detection and crash diagnostics — see [DockScope](docs/DockScope.md) |
@@ -65,12 +65,20 @@ homelab/
 ├── docker-compose/
 │   ├── monitoring-grafana-promethues-cadvisor-node-exporter/
 │   │   ├── docker-compose.yml
+│   │   ├── .env.example
 │   │   ├── alloy/
 │   │   │   └── config.alloy
 │   │   ├── grafana/
 │   │   │   └── provisioning/
+│   │   │       ├── alerting/
+│   │   │       │   ├── contactpoints.yaml
+│   │   │       │   ├── policies.yaml
+│   │   │       │   └── rules.yaml
 │   │   │       └── datasources/
-│   │   │           └── loki.yml
+│   │   │           ├── loki.yml
+│   │   │           └── prometheus.yml
+│   │   ├── loki/
+│   │   │   └── local-config.yaml
 │   │   └── prometheus/
 │   │       └── prometheus.yml
 │   ├── pihole/
@@ -269,12 +277,14 @@ Rather than pulling and recreating manually, every always-on stack has a matchin
 - A pod doesn't pick up a widened RBAC grant on its own — its informers already failed and cached that state. `kubectl rollout restart` is required after any `ClusterRole` change for an already-running pod to actually benefit from it.
 - Old log lines don't disappear from Grafana/Loki after a fix ships — they just age out of whatever time window the dashboard is querying. A dropping "Errors total" over a few minutes is the real signal that a fix worked, not an empty panel immediately after applying it.
 - Migrating from a UI-based reverse proxy (Nginx Proxy Manager) to a config-as-code one (Traefik) forced a cleanup of every hardcoded password in every compose file — the migration was the catalyst for adopting Vaultwarden and proper secret management across the stack. See [Traefik](docs/Traefik.md) and [Vaultwarden](docs/Vaultwarden.md).
+- Grafana provisioning files don't expand Docker Compose `${VARIABLE}` syntax — email addresses and other non-secret values must be literal strings in the provisioning YAML. Only secrets like API keys and passwords should go through `.env` files and `${...}` references in `docker-compose.yml`. See [Alerting](docs/Alerting.md).
+- Three well-tuned alert rules (target-down, high-CPU, error-log-spike) cover the important failure modes on a single-node homelab without generating alert fatigue. Adding more rules than you'd actually act on at 3 AM just creates noise — each rule should answer "would I get up for this?"
 
 ## Roadmap
 
 - [x] ~~Add a self-hosted Gitea instance for private repos and CI runners~~ — done via self-hosted GitLab instead, see [GitLab CI/CD](docs/GitLab-CICD.md)
 - [ ] Auto-deploy via Watchtower on image updates
-- [ ] Expand monitoring with alerting rules
+- [x] ~~Expand monitoring with alerting rules~~ — done via Grafana unified alerting, provisioned as code — see [Alerting](docs/Alerting.md)
 
 ## Author
 
