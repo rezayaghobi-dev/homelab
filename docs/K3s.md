@@ -22,9 +22,24 @@ curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server \
 - **`--flannel-backend=vxlan`** — explicit rather than relying on the default, and chosen over `host-gw` since VXLAN works across nodes that aren't on the same L2 segment, keeping the door open for a future worker node.
 - **`--write-kubeconfig-mode=644`** — makes `/etc/rancher/k3s/k3s.yaml` world-readable so a personal, non-root kubeconfig copy can be made without repeated `sudo`.
 
-## Exposure pattern: NPM in front, NodePort behind
+## Exposure pattern: Traefik → ingress-nginx → Ingress
 
-Rather than running a second ingress controller inside the cluster (which would mean two reverse proxies stacked for no benefit), each service gets a `Service` of `type: NodePort`. The existing reverse proxy adds one more proxy host pointing at `homeserver:<nodeport>` — identical to how it already fronts every Docker container. From the proxy's perspective, a K8s pod behind a NodePort is indistinguishable from a Docker container; same TLS setup, same cert renewal flow, zero new moving parts in the HTTPS chain.
+K3s is fronted by the existing Docker-side Traefik reverse proxy, which already owns ports 80/443 (see [Reverse Proxy](Reverse-Proxy.md)). Because K3s itself can't bind those ports, the current standard for exposing an in-cluster service is:
+
+```
+Client → Traefik (:80/:443) → ingress-nginx NodePort → Ingress → Service → Pod
+```
+
+1. **Traefik** (Docker container) terminates TLS (`*.home.server` via mkcert) and routes by `Host` header, same as every Docker Compose service.
+2. **ingress-nginx** runs inside K3s. Its `Service` is exposed as a **NodePort** on the host, giving Traefik a stable `homeserver:<nodeport>` target to forward to — no new ports on the K3s side, no port conflicts with the host's Traefik.
+3. **ingress-nginx** (the in-cluster Ingress controller) matches the request against `Ingress` resources in the cluster and forwards to the right `Service`.
+4. **Service → Pod** as normal Kubernetes routing.
+
+This keeps a single TLS termination layer and a single DNS entry point (`*.home.server` via Pi-hole), while letting in-cluster `Ingress` resources carry the routing logic as code alongside the workloads they protect. Any app deployed via [Argo CD](ArgoCD.md) follows this pattern — its `Ingress` (e.g., `kubernetes/apps/homepage/ingress.yaml`) is served by ingress-nginx behind the NodePort.
+
+### Legacy NodePort-only services
+
+The earlier kube-state-metrics deployment was exposed as a standalone `Service` of `type: NodePort` without an in-cluster Ingress — a simpler approach used before ingress-nginx was introduced. Services still using that legacy pattern (direct NodePort, no Ingress object) continue to work the same way: Traefik forwards to `homeserver:<nodeport>` and the Service routes to Pods directly. New work should use the ingress-nginx path above unless a service genuinely has no need for `Host`-based routing.
 
 ## Namespace and resource governance
 

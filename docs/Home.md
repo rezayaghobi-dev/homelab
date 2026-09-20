@@ -8,6 +8,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 - [Monitoring Stack](Monitoring-Stack.md)
 - [Alerting](Alerting.md)
 - [K3s](K3s.md)
+- [ArgoCD](ArgoCD.md)
 - [Network Services](Network-Services.md)
 - [Media Automation](Media-Automation.md)
 - [Workflow Automation](Workflow-Automation.md)
@@ -41,7 +42,7 @@ Documentation for a self-hosted homelab running entirely on Docker Compose. This
 | **Registry** | **Nexus3** (Docker Hub pull-through cache + artifact repo) |
 | **Passwords** | **Vaultwarden** (Bitwarden-compatible, 30+ char passwords) |
 | **CI/CD** | Self-hosted **GitLab** (Omnibus) + Docker-executor **Runner** |
-| **Orchestration (K8s)** | Single-node **K3s** cluster, monitored via the same Prometheus/Grafana/Loki stack |
+| **Orchestration (K8s)** | Single-node **K3s** cluster, fronted by **Traefik** via ingress-nginx NodePort, managed via **Argo CD** GitOps (manifests in `kubernetes/apps/`, watched by `kubernetes/argocd-apps/`), monitored via the same Prometheus/Grafana/Loki stack |
 
 This is a running system, not a demo — screenshots throughout this wiki are from the live dashboards.
 

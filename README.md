@@ -12,6 +12,7 @@ A self-hosted homelab running on Docker Compose, built and maintained on an Ubun
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=flat&logo=kubernetes&logoColor=white)
 ![K3s](https://img.shields.io/badge/K3s-FFC61C?style=flat&logo=k3s&logoColor=white)
 ![Vagrant](https://img.shields.io/badge/Vagrant-1868F2?style=flat&logo=vagrant&logoColor=white)
+![ArgoCD](https://img.shields.io/badge/ArgoCD-EF8B1B?style=flat&logo=argocd&logoColor=white)
 ![GitLab](https://img.shields.io/badge/GitLab-FC6D26?style=flat&logo=gitlab&logoColor=white)
 ![Traefik](https://img.shields.io/badge/Traefik-36CFD1?style=flat&logo=traefik&logoColor=white)
 ![Nexus](https://img.shields.io/badge/Nexus-BC1E2D?style=flat&logo=sonatype&logoColor=white)
@@ -46,7 +47,7 @@ This is a real, running homelab — not a demo. It's deployed on a home Ubuntu s
 | **Custom CI images** | `docker-compose/gitlab/ci-images-reference/` | Self-built, minimal Docker images for CI pipelines, stored in a self-hosted Container Registry, rebuilt biweekly — see [Custom CI Runner Images](docs/CI-Custom-Images.md) |
 | **Voting app CI/CD** | `voting-app-monorepo` (self-hosted GitLab, referenced here) | Full pipeline: build, test, vulnerability scan, 3-environment deploy with rollback, load test, DB backup to MinIO — see [Voting App — Mono-Repo](docs/Voting-App-Monorepo.md) |
 | **Object storage** | `docker-compose/minio/` | Self-hosted MinIO (S3-compatible), `-cpuv1` release tag for CPU compatibility — backup target for the voting app's Postgres dumps |
-| **K3s cluster** | `kubernetes/` | Single-node K3s cluster running alongside the Docker Compose stack, fronted by the same reverse proxy via NodePort, monitored through the same Prometheus/Grafana/Loki stack — see [K3s](docs/K3s.md) |
+| **K3s cluster** | `kubernetes/` | Single-node K3s cluster running alongside the Docker Compose stack, fronted by the same reverse proxy via NodePort on ingress-nginx, managed via **Argo CD** GitOps (applications/ and argocd-apps/ folders) — monitored through the same Prometheus/Grafana/Loki stack — see [K3s](docs/K3s.md) and [ArgoCD](docs/argocd.md) |
 
 ## Learning labs (not always-on)
 
@@ -191,6 +192,7 @@ homelab/
 │   ├── Architecture-and-Hardware.md
 │   ├── Monitoring-Stack.md
 │   ├── K3s.md
+│   ├── ArgoCD.md
 │   ├── Network-Services.md
 │   ├── Media-Automation.md
 │   ├── Workflow-Automation.md
@@ -209,6 +211,18 @@ homelab/
 ├── kubernetes/
 │   ├── alloy-rbac/
 │   │   └── alloy-rbac.yaml
+│   ├── apps/
+│   │   ├── README.md
+│   │   └── homepage/
+│   │       ├── configmap.yaml
+│   │       ├── deployment.yaml
+│   │       ├── ingress.yaml
+│   │       ├── kustomization.yaml
+│   │       └── service.yaml
+│   ├── argocd-apps/
+│   │   ├── README.md
+│   │   └── homepage/
+│   │       └── homepage-app.yaml
 │   ├── kube-state-metrics/
 │   │   ├── kube-state-metrics.yaml
 │   │   └── prometheus-rbac.yaml
@@ -244,6 +258,8 @@ docker compose up -d
 ## Updating a service
 
 Rather than pulling and recreating manually, every always-on stack has a matching Ansible playbook that pulls the latest images, recreates containers, verifies they're healthy, and prunes unused images — run through Semaphore's web UI. See [Ansible Playbooks](docs/AnsiblePlaybooks.md) for details on how the shared role works.
+
+For the K3s cluster, updates are GitOps-driven rather than Ansible-driven: Kubernetes manifests live in `kubernetes/apps/`, one folder per app with a `kustomization.yaml`, and [Argo CD](docs/argocd.md) continuously syncs the cluster to match whatever is on `main` — no manual `kubectl apply` after the initial setup. New apps are added by dropping the manifests in `kubernetes/apps/<name>/` and the corresponding `Application` in `kubernetes/argocd-apps/<name>/`.
 
 ## Security notes
 
