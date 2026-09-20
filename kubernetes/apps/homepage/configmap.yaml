@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-config
+data:
+  settings.yaml: |
+    title: Homelab
+  services.yaml: |
+    - Infrastructure:
+        - ArgoCD:
+            href: https://argocd.home.server
+            description: GitOps
+        - Traefik:
+            href: https://traefik.home.server
+            description: Reverse proxy
+  widgets.yaml: |
+    []
+  bookmarks.yaml: |
+    []
