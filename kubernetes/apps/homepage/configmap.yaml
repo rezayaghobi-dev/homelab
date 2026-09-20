@@ -13,6 +13,22 @@ data:
         - Traefik:
             href: https://traefik.home.server
             description: Reverse proxy
+        - Pi-hole:
+            href: https://pihole.home.server
+            description: DNS / ad-blocking
+
+    - Media:
+        - Plex:
+            href: https://plex.home.server
+            description: Media server
+
+    - Monitoring:
+        - Sentinel:
+            href: https://sentinel.home.server
+            description: Disk health
+
+  
+
   widgets.yaml: |
     []
   bookmarks.yaml: |
