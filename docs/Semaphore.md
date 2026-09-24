@@ -32,7 +32,7 @@ It was chosen for this homelab because:
 
 \- Username / Email: `admin` or `rezay5639@gmail.com`
 
-\- Password: `rezayaghobi1386`
+\- Password: `your_password`
 
 
 
